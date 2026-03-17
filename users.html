@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Users & Roles | SimpleSIS</title>
+  <link rel="stylesheet" href="users.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2>SimpleSIS</h2>
+      </div>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="users.html" class="active">Users & Roles</a>
+        <a href="#">Courses & Pacing</a>
+        <a href="#">Live Attendance</a>
+        <a href="#">Settings</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn-secondary">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header">
+        <div>
+          <h1>User Management</h1>
+          <p id="display-school-name" class="subtitle">Loading...</p>
+        </div>
+        <div class="header-actions">
+          <button id="open-create-modal-btn" class="btn-primary">+ Add New User</button>
+        </div>
+      </header>
+
+      <section class="table-container">
+        <table id="users-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <div id="user-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add New User</h2>
+        <button id="close-modal-btn" class="close-btn">&times;</button>
+      </div>
+      <form id="user-form">
+        <div class="input-row">
+          <div class="input-group">
+            <label for="new-first-name">First Name</label>
+            <input type="text" id="new-first-name" required>
+          </div>
+          <div class="input-group">
+            <label for="new-last-name">Last Name</label>
+            <input type="text" id="new-last-name" required>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="new-email">Email Address</label>
+          <input type="email" id="new-email" required>
+        </div>
+        <div class="input-group">
+          <label for="new-password">Temporary Password</label>
+          <input type="text" id="new-password" required minlength="6">
+        </div>
+        <div class="input-group">
+          <label for="new-role">System Role</label>
+          <select id="new-role" required>
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cancel-btn" class="btn-secondary">Cancel</button>
+          <button type="submit" id="submit-user-btn" class="btn-primary">Create User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="users.js"></script>
+</body>
+</html>

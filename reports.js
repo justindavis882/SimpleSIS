@@ -166,7 +166,6 @@ templateForm.addEventListener('submit', async (e) => {
   } catch (error) { 
     console.error("Error creating template:", error); 
   }
-});
 
   // 3. Save to Firebase
   try {

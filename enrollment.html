@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Course Enrollment | SimpleSIS</title>
+  <link rel="stylesheet" href="enrollment.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2 id="sidebar-brand-name">SimpleSIS</h2>
+      </div>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="users.html">Users & Roles</a>
+        <a href="courses.html">Courses & Pacing</a>
+        <a href="enrollment.html" class="active">Enrollment</a>
+        <a href="attendance.html">Live Attendance</a>
+        <a href="settings.html">Settings</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn-secondary">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header">
+        <div>
+          <h1>Roster Management</h1>
+          <p id="display-school-name" class="subtitle">Loading...</p>
+        </div>
+      </header>
+
+      <section class="enrollment-controls">
+        <div class="input-group" style="flex: 1;">
+          <label for="course-select">1. Select a Course</label>
+          <select id="course-select">
+            <option value="" disabled selected>Loading courses...</option>
+          </select>
+        </div>
+        
+        <div class="input-group" style="flex: 1;">
+          <label for="student-select">2. Add Student to Course</label>
+          <div style="display: flex; gap: 12px;">
+            <select id="student-select" disabled>
+              <option value="" disabled selected>Select a course first</option>
+            </select>
+            <button id="enroll-btn" class="btn-primary" disabled style="width: auto; white-space: nowrap;">+ Enroll</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="table-container">
+        <table id="roster-table">
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Email</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="roster-tbody">
+            <tr>
+              <td colspan="3" style="text-align: center; color: #64748b;">Select a course to view the roster.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="enrollment.js"></script>
+</body>
+</html>

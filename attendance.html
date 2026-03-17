@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Attendance | SimpleSIS</title>
+  <link rel="stylesheet" href="attendance.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2>SimpleSIS</h2>
+      </div>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="users.html">Users & Roles</a>
+        <a href="courses.html">Courses & Pacing</a>
+        <a href="attendance.html" class="active">Live Attendance</a>
+        <a href="settings.html">Settings</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn-secondary">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header">
+        <div>
+          <h1>Campus Attendance</h1>
+          <p id="display-school-name" class="subtitle">Loading...</p>
+        </div>
+        <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
+          <label for="attendance-date" style="font-weight: 500; color: #5f6368;">Select Date:</label>
+          <input type="date" id="attendance-date" class="date-picker">
+          <button id="refresh-btn" class="btn-secondary" style="width: auto;">Refresh</button>
+        </div>
+      </header>
+
+      <section class="live-tiles" style="margin-bottom: 24px;">
+        <div class="tile">
+          <h3>Total Present</h3>
+          <p class="tile-number status-active" id="count-present">0</p>
+        </div>
+        <div class="tile">
+          <h3>Total Absent</h3>
+          <p class="tile-number status-false" id="count-absent">0</p>
+        </div>
+        <div class="tile">
+          <h3>Total Tardy</h3>
+          <p class="tile-number" id="count-tardy" style="color: #f59e0b;">0</p>
+        </div>
+      </section>
+
+      <section class="table-container">
+        <table id="attendance-table">
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Course</th>
+              <th>Status</th>
+              <th>Logged By</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="attendance-tbody">
+            <tr>
+              <td colspan="5" style="text-align: center; color: #64748b;">Select a date to view attendance records.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="attendance.js"></script>
+</body>
+</html>

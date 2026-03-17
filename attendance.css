@@ -1,0 +1,47 @@
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { background-color: #f0f2f5; color: #333; }
+
+/* Layout & Sidebar */
+.dashboard-layout { display: flex; height: 100vh; }
+.sidebar { width: 260px; background-color: #ffffff; border-right: 1px solid #dadce0; display: flex; flex-direction: column; }
+.brand { padding: 24px; border-bottom: 1px solid #eee; }
+.brand h2 { color: #1a73e8; font-size: 22px; }
+nav { display: flex; flex-direction: column; padding: 16px 0; flex-grow: 1; }
+nav a { padding: 12px 24px; text-decoration: none; color: #5f6368; font-weight: 500; transition: background 0.2s; }
+nav a:hover, nav a.active { background-color: #e8f0fe; color: #1a73e8; border-right: 3px solid #1a73e8; }
+.sidebar-footer { padding: 24px; border-top: 1px solid #eee; }
+
+/* Main Content */
+.main-content { flex-grow: 1; padding: 32px; overflow-y: auto; }
+.top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+.top-header h1 { font-size: 28px; color: #202124; }
+.subtitle { color: #5f6368; margin-top: 4px; }
+
+/* Inputs & Buttons */
+.date-picker { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; color: #333; }
+.btn-primary, .btn-secondary { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; }
+.btn-secondary { background: white; border: 1px solid #cbd5e1; color: #475569; }
+.btn-secondary:hover { background: #f8fafc; }
+
+/* Live Tiles */
+.live-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; }
+.tile { background: white; padding: 24px; border-radius: 12px; border: 1px solid #eaebed; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+.tile h3 { font-size: 14px; color: #5f6368; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+.tile-number { font-size: 32px; font-weight: 600; color: #202124; }
+
+/* Data Table */
+.table-container { background: white; border-radius: 12px; border: 1px solid #eaebed; box-shadow: 0 2px 6px rgba(0,0,0,0.05); overflow: hidden; }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+thead { background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; }
+th { padding: 16px 24px; font-size: 13px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
+td { padding: 16px 24px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; font-size: 14px;}
+
+/* Status Badges */
+.status-badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+.status-present { background: #bbf7d0; color: #166534; }
+.status-absent { background: #fecaca; color: #991b1b; }
+.status-tardy { background: #fef3c7; color: #b45309; }
+
+/* Text colors for tiles */
+.status-active { color: #0f9d58 !important; }
+.status-false { color: #d93025 !important; }

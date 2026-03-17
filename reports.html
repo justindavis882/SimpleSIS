@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reports Engine | SimpleSIS</title>
+  <title>Custom Reports Engine | SimpleSIS</title>
   <link rel="stylesheet" href="teacher-portal.css">
   <style>
-    /* Print Styles to hide the UI and only show the report */
     @media print {
       .sidebar, .top-header, .report-controls, .table-container, .modal, button { display: none !important; }
       .dashboard-layout { display: block; height: auto; }
@@ -14,37 +13,35 @@
       #printable-report-container { display: block !important; width: 100%; }
       body { background: white; }
     }
-
     #printable-report-container { display: none; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 20px;}
     .report-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid var(--primary-color); padding-bottom: 20px; }
-    .report-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .report-section { margin-bottom: 40px; }
+    .report-section h3 { color: #0f172a; margin-bottom: 12px; font-size: 18px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;}
+    .report-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
     .report-table th, .report-table td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; font-size: 14px; }
     .report-table th { background: #f8fafc; color: #0f172a; }
+    
+    .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f8fafc; padding: 16px; border-radius: 6px; border: 1px solid #e2e8f0;}
+    .checkbox-grid label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: #475569;}
   </style>
 </head>
 <body>
 
   <div class="dashboard-layout">
     <aside class="sidebar">
-      <div class="brand">
-        <h2 id="sidebar-brand-name">SimpleSIS</h2>
-      </div>
-      <nav id="dynamic-sidebar">
-        <p style="padding: 12px 24px; color: #94a3b8; font-size: 14px;">Loading menu...</p>
-      </nav>
-      <div class="sidebar-footer">
-        <button id="logout-btn" class="btn-secondary">Log Out</button>
-      </div>
+      <div class="brand"><h2 id="sidebar-brand-name">SimpleSIS</h2></div>
+      <nav id="dynamic-sidebar"><p style="padding: 12px 24px; color: #94a3b8; font-size: 14px;">Loading menu...</p></nav>
+      <div class="sidebar-footer"><button id="logout-btn" class="btn-secondary">Log Out</button></div>
     </aside>
 
     <main class="main-content">
       <header class="top-header">
         <div>
           <h1>Reports Engine</h1>
-          <p class="subtitle">Run and manage system data reports.</p>
+          <p class="subtitle">Build, run, and print custom data reports.</p>
         </div>
         <div class="header-actions">
-          <button id="open-template-modal-btn" class="btn-primary hidden">+ Create Template</button> 
+          <button id="open-template-modal-btn" class="btn-primary hidden">+ Create Custom Template</button> 
         </div>
       </header>
 
@@ -53,8 +50,8 @@
           <thead>
             <tr>
               <th>Report Name</th>
-              <th>Archetype</th>
-              <th>Description</th>
+              <th>Target Type</th>
+              <th>Included Modules</th>
               <th style="text-align: right;">Actions</th>
             </tr>
           </thead>
@@ -75,28 +72,34 @@
   </div>
 
   <div id="template-modal" class="modal hidden">
-    <div class="modal-content">
+    <div class="modal-content" style="width: 550px;">
       <div class="modal-header">
-        <h2>Report Template Builder</h2>
+        <h2>Custom Report Builder</h2>
         <button id="close-modal-btn" class="close-btn">&times;</button>
       </div>
       <form id="template-form">
         <div class="input-group">
-          <label for="report-name">Report Name</label>
-          <input type="text" id="report-name" placeholder="e.g., Missing Assignments List" required>
+          <label for="report-name">Report Template Name</label>
+          <input type="text" id="report-name" placeholder="e.g., Weekly Parent Update" required>
         </div>
         <div class="input-group">
-          <label for="report-archetype">Data Archetype</label>
-          <select id="report-archetype" required>
-            <option value="missing_assignments">Course: Missing Assignments</option>
-            <option value="course_roster">Course: Full Roster & Grades</option>
-            <option value="student_progress">Student: Single Student Progress</option>
+          <label for="report-target">Primary Target</label>
+          <select id="report-target" required>
+            <option value="course">A Specific Course</option>
+            <option value="student">An Individual Student</option>
           </select>
         </div>
+        
         <div class="input-group">
-          <label for="report-desc">Description (Instructions for Teachers)</label>
-          <input type="text" id="report-desc" placeholder="Generates a list of students with missing work for a specific class." required>
+          <label>Data Modules to Include</label>
+          <div class="checkbox-grid">
+            <label><input type="checkbox" class="module-chk" value="roster"> Student Details/Roster</label>
+            <label><input type="checkbox" class="module-chk" value="grades"> Standard Gradebook</label>
+            <label><input type="checkbox" class="module-chk" value="missing"> Missing Assignments Flag</label>
+            <label><input type="checkbox" class="module-chk" value="attendance"> Attendance Summary</label>
+          </div>
         </div>
+
         <div class="modal-actions">
           <button type="button" id="cancel-btn" class="btn-secondary">Cancel</button>
           <button type="submit" class="btn-primary">Save Template</button>

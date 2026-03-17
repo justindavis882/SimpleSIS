@@ -113,13 +113,15 @@ function listenToTemplates() {
       const data = docSnap.data();
       templatesCache[docSnap.id] = data;
 
-      const formatArchetype = data.archetype.replace('_', ' ').toUpperCase();
+      // BULLETPROOFING: If the archetype is missing, use a fallback so the app doesn't crash!
+      const rawArchetype = data.archetype || "unknown_type";
+      const formatArchetype = rawArchetype.replace('_', ' ').toUpperCase();
       
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><strong>${data.name}</strong></td>
+        <td><strong>${data.name || "Untitled Report"}</strong></td>
         <td><span style="background: #e8f0fe; color: var(--primary-color); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">${formatArchetype}</span></td>
-        <td style="color: #64748b;">${data.description}</td>
+        <td style="color: #64748b;">${data.description || "No description provided."}</td>
         <td style="text-align: right;">
           <button class="btn-primary run-btn" data-id="${docSnap.id}" style="padding: 6px 12px; width: auto;">▶ Run</button>
           ${currentUserRole === 'admin' ? `<button class="btn-danger delete-btn" data-id="${docSnap.id}" style="padding: 6px 12px; width: auto;">Delete</button>` : ''}
@@ -132,24 +134,39 @@ function listenToTemplates() {
   });
 }
 
+// STRICT FORM VALIDATION
 templateForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  // 1. Hard Gatekeeper: Stop sneaky teachers!
+  // 1. Hard Gatekeeper: Double check role before saving
   if (currentUserRole !== 'admin') {
-    alert("Security Violation: Only Administrators can create report templates.");
+    alert("Security Violation: Only Administrators can create templates.");
     builderModal.classList.add('hidden');
     return;
   }
 
-  // 2. Strict Validation: Prevent empty spaces from passing as text
+  // 2. Prevent empty spaces from passing as text
   const reportName = nameInput.value.trim();
   const reportDesc = descInput.value.trim();
 
   if (!reportName || !reportDesc) {
-    alert("Hold up! Please provide a valid Name and Description for this report.");
-    return; // Stops the function from saving to the database
+    alert("Please provide a valid Name and Description for this report.");
+    return; 
   }
+
+  // 3. Save to Firebase
+  try {
+    await addDoc(collection(db, `schools/${activeSchoolId}/reports`), {
+      name: reportName,
+      archetype: archetypeSelect.value,
+      description: reportDesc
+    });
+    builderModal.classList.add('hidden');
+    templateForm.reset();
+  } catch (error) { 
+    console.error("Error creating template:", error); 
+  }
+});
 
   // 3. Save to Firebase
   try {

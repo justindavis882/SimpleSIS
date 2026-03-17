@@ -134,15 +134,36 @@ function listenToTemplates() {
 
 templateForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  // 1. Hard Gatekeeper: Stop sneaky teachers!
+  if (currentUserRole !== 'admin') {
+    alert("Security Violation: Only Administrators can create report templates.");
+    builderModal.classList.add('hidden');
+    return;
+  }
+
+  // 2. Strict Validation: Prevent empty spaces from passing as text
+  const reportName = nameInput.value.trim();
+  const reportDesc = descInput.value.trim();
+
+  if (!reportName || !reportDesc) {
+    alert("Hold up! Please provide a valid Name and Description for this report.");
+    return; // Stops the function from saving to the database
+  }
+
+  // 3. Save to Firebase
   try {
     await addDoc(collection(db, `schools/${activeSchoolId}/reports`), {
-      name: nameInput.value.trim(),
+      name: reportName,
       archetype: archetypeSelect.value,
-      description: descInput.value.trim()
+      description: reportDesc
     });
     builderModal.classList.add('hidden');
     templateForm.reset();
-  } catch (error) { console.error("Error creating template:", error); }
+  } catch (error) { 
+    console.error("Error creating template:", error); 
+    alert("Failed to create template. Check your connection.");
+  }
 });
 
 // --- RUN REPORT ENGINE ---

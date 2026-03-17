@@ -311,6 +311,154 @@ document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
 openModalBtn.addEventListener('click', () => modal.classList.remove('hidden'));
 closeModalBtn.addEventListener('click', () => { modal.classList.add('hidden'); resetForm(); });
 
+// ==========================================
+// --- IMPORT ASSIGNMENTS LOGIC ---
+// ==========================================
+
+// New DOM Elements
+const importModal = document.getElementById('import-modal');
+const openImportBtn = document.getElementById('open-import-modal-btn');
+const closeImportBtn = document.getElementById('close-import-btn');
+const cancelImportBtn = document.getElementById('cancel-import-btn');
+const importCourseSelect = document.getElementById('import-course-select');
+const importAssignmentsList = document.getElementById('import-assignments-list');
+const confirmImportBtn = document.getElementById('confirm-import-btn');
+
+let importAssignmentsCache = []; 
+
+// 1. Open Modal & Load Teacher's Other Courses
+openImportBtn.addEventListener('click', async () => {
+  importModal.classList.remove('hidden');
+  importCourseSelect.innerHTML = '<option value="" disabled selected>Loading your courses...</option>';
+  importAssignmentsList.innerHTML = '<p style="color: #64748b; font-size: 14px; text-align: center;">Select a course to view assignments.</p>';
+  confirmImportBtn.disabled = true;
+
+  try {
+    const q = query(
+      collection(db, `schools/${activeSchoolId}/courses`),
+      where("teacherId", "==", currentTeacherId),
+      where("isActive", "==", true)
+    );
+    const coursesSnap = await getDocs(q);
+    
+    importCourseSelect.innerHTML = '<option value="" disabled selected>Choose a source course...</option>';
+    let count = 0;
+
+    coursesSnap.forEach(docSnap => {
+      // Don't let them import from the course they are currently looking at
+      if (docSnap.id !== activeCourseId) { 
+        const data = docSnap.data();
+        const option = document.createElement('option');
+        option.value = docSnap.id;
+        option.text = `${data.courseCode}: ${data.courseName}`;
+        importCourseSelect.appendChild(option);
+        count++;
+      }
+    });
+
+    if (count === 0) {
+       importCourseSelect.innerHTML = '<option value="" disabled selected>No other active courses found.</option>';
+    }
+  } catch (error) {
+    console.error("Error loading courses for import:", error);
+  }
+});
+
+// 2. Load Assignments when a source course is selected
+importCourseSelect.addEventListener('change', async () => {
+  const sourceCourseId = importCourseSelect.value;
+  importAssignmentsList.innerHTML = '<p style="color: #64748b; font-size: 14px; text-align: center;">Loading assignments...</p>';
+  confirmImportBtn.disabled = true;
+  importAssignmentsCache = [];
+
+  try {
+    const assignSnap = await getDocs(collection(db, `schools/${activeSchoolId}/courses/${sourceCourseId}/assignments`));
+    
+    if (assignSnap.empty) {
+      importAssignmentsList.innerHTML = '<p style="color: #64748b; font-size: 14px; text-align: center;">No assignments found in this course.</p>';
+      return;
+    }
+
+    importAssignmentsList.innerHTML = '';
+    assignSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      importAssignmentsCache.push({ id: docSnap.id, ...data });
+
+      const label = document.createElement('label');
+      label.style.display = 'block';
+      label.style.marginBottom = '12px';
+      label.style.cursor = 'pointer';
+      label.innerHTML = `
+        <input type="checkbox" class="import-chk" value="${docSnap.id}" style="margin-right: 8px;">
+        <strong>${data.title}</strong> <span style="color:#64748b; font-size: 13px;">(${data.maxScore} pts &bull; Due: ${data.dateDue})</span>
+      `;
+      importAssignmentsList.appendChild(label);
+    });
+
+    // Checkbox listener to enable/disable the "Import" button
+    const checkboxes = document.querySelectorAll('.import-chk');
+    checkboxes.forEach(chk => {
+      chk.addEventListener('change', () => {
+        const anyChecked = Array.from(checkboxes).some(c => c.checked);
+        confirmImportBtn.disabled = !anyChecked;
+      });
+    });
+
+  } catch (error) {
+    console.error("Error loading assignments to import:", error);
+    importAssignmentsList.innerHTML = '<p style="color: red; font-size: 14px; text-align: center;">Failed to load assignments.</p>';
+  }
+});
+
+// 3. Process the Import!
+confirmImportBtn.addEventListener('click', async () => {
+  confirmImportBtn.innerText = "Importing...";
+  confirmImportBtn.disabled = true;
+
+  const checkedBoxes = document.querySelectorAll('.import-chk:checked');
+  const promises = [];
+
+  checkedBoxes.forEach(chk => {
+    const assignId = chk.value;
+    const originalData = importAssignmentsCache.find(a => a.id === assignId);
+    
+    if (originalData) {
+      // Create a fresh payload (we don't want to copy the old Firebase ID)
+      const payload = {
+        title: originalData.title,
+        dateAssigned: originalData.dateAssigned,
+        dateDue: originalData.dateDue,
+        maxScore: originalData.maxScore,
+        description: originalData.description || "",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      
+      // Push the new assignment to the CURRENT course's collection
+      const p = addDoc(collection(db, `schools/${activeSchoolId}/courses/${activeCourseId}/assignments`), payload);
+      promises.push(p);
+    }
+  });
+
+  try {
+    await Promise.all(promises);
+    alert(`Successfully imported ${promises.length} assignment(s)!`);
+    closeImportModal();
+    // Note: The grid will update automatically because listenToAssignments() is already running!
+  } catch (error) {
+    console.error("Error importing assignments:", error);
+    alert("An error occurred during import.");
+    confirmImportBtn.innerText = "Import Selected";
+    confirmImportBtn.disabled = false;
+  }
+});
+
+function closeImportModal() {
+  importModal.classList.add('hidden');
+}
+closeImportBtn.addEventListener('click', closeImportModal);
+cancelImportBtn.addEventListener('click', closeImportModal);
+
 // --- BRANDING & LOGOUT ---
 async function loadSchoolBranding() {
   try {

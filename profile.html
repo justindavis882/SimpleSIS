@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile | SimpleSIS</title>
+  <link rel="stylesheet" href="teacher-portal.css">
+  <style>
+    /* Profile specific tweaks */
+    .profile-card { background: white; padding: 32px; border-radius: 12px; border: 1px solid #eaebed; box-shadow: 0 2px 6px rgba(0,0,0,0.05); max-width: 600px; margin-bottom: 24px; }
+    .profile-header { display: flex; align-items: center; gap: 20px; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid #e2e8f0; }
+    .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; justify-content: center; align-items: center; font-size: 32px; font-weight: bold; text-transform: uppercase; }
+    .security-card { border-left: 4px solid #f59e0b; }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2 id="sidebar-brand-name">SimpleSIS</h2>
+      </div>
+      <nav id="dynamic-sidebar">
+        <p style="padding: 12px 24px; color: #94a3b8; font-size: 14px;">Loading menu...</p>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn-secondary">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header" style="margin-bottom: 30px;">
+        <div>
+          <h1>Account Settings</h1>
+          <p class="subtitle">Manage your personal information and security.</p>
+        </div>
+      </header>
+
+      <section class="profile-card">
+        <div class="profile-header">
+          <div class="profile-avatar" id="large-avatar">?</div>
+          <div>
+            <h2 id="display-full-name" style="font-size: 20px; color: #0f172a; margin-bottom: 4px;">Loading...</h2>
+            <span id="display-role" style="background: #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase;">Role</span>
+          </div>
+        </div>
+
+        <form id="profile-form">
+          <div style="display: flex; gap: 16px; margin-bottom: 20px;">
+            <div style="flex: 1;">
+              <label for="profile-first" style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: #475569;">First Name</label>
+              <input type="text" id="profile-first" placeholder="e.g., Olly" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;" required>
+            </div>
+            <div style="flex: 1;">
+              <label for="profile-last" style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: #475569;">Last Name</label>
+              <input type="text" id="profile-last" placeholder="e.g., Davis" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;" required>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 24px;">
+            <label for="profile-email" style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: #475569;">Email Address (Cannot be changed here)</label>
+            <input type="email" id="profile-email" disabled style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; color: #94a3b8; cursor: not-allowed;">
+          </div>
+
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" id="save-profile-btn" class="btn-primary" style="width: auto;">Save Profile Updates</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="profile-card security-card">
+        <h2 style="font-size: 18px; color: #0f172a; margin-bottom: 8px;">Security & Passwords</h2>
+        <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Need a new password? We will send a secure reset link to your registered email address.</p>
+        <button id="reset-password-btn" class="btn-secondary" style="width: auto;">Send Password Reset Email</button>
+        <p id="reset-msg" style="color: #0f9d58; font-size: 13px; font-weight: 500; margin-top: 12px; display: none;">✓ Reset link sent! Check your inbox.</p>
+      </section>
+
+    </main>
+  </div>
+
+  <script type="module" src="profile.js"></script>
+</body>
+</html>

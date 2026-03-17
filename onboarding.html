@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Setup | Admin Portal | SimpleSIS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="setup-container">
+    <div class="setup-header">
+      <h2>Welcome to Setup</h2>
+      <p id="step-description">Verify your School ID to begin.</p>
+    </div>
+
+    <form id="step1-form" class="setup-form">
+      <div class="input-group">
+        <label for="school-id">Provided School ID</label>
+        <input type="text" id="school-id" placeholder="e.g., SCH-8472-A" required>
+      </div>
+      <div class="input-group">
+        <label for="admin-email">Admin Email</label>
+        <input type="email" id="admin-email" placeholder="admin@yourschool.edu" required>
+      </div>
+      <div class="input-group">
+        <label for="admin-password">Create Admin Password</label>
+        <input type="password" id="admin-password" required minlength="8">
+      </div>
+      <button type="submit" class="btn-primary">Verify & Continue</button>
+    </form>
+
+    <form id="step2-form" class="setup-form hidden">
+      <div class="input-group">
+        <label for="school-name">Official School Name</label>
+        <input type="text" id="school-name" placeholder="e.g., Madison High School" required>
+      </div>
+      <div class="input-group">
+        <label for="current-term">Current Term</label>
+        <select id="current-term" required>
+          <option value="Fall 2026">Fall 2026</option>
+          <option value="Spring 2026" selected>Spring 2026</option>
+          <option value="Summer 2026">Summer 2026</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary">Initialize System</button>
+    </form>
+    
+    <div id="loading-spinner" class="hidden">Processing...</div>
+  </div>
+
+  <script src="app.js"></script>
+  
+  <script type="module" src="app.js"></script>
+</body>
+</html>

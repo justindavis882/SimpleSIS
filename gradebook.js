@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, getDocs, collection, query, where, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCLkAIMy7R5UEoirN4CaVWuKJbCxzyQBVI",
@@ -15,175 +15,284 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// DOM Elements - Main UI
+// DOM Elements
 const courseTitleEl = document.getElementById('course-title-display');
-const assignmentSelect = document.getElementById('assignment-select');
-const tbody = document.getElementById('roster-tbody');
+const thead = document.getElementById('matrix-thead');
+const tbody = document.getElementById('matrix-tbody');
 const submitGradesBtn = document.getElementById('submit-grades-btn');
 const logoutBtn = document.getElementById('logout-btn');
 
-// DOM Elements - Modal
+// Modal Elements
 const modal = document.getElementById('assignment-modal');
 const openModalBtn = document.getElementById('open-assignment-modal-btn');
 const closeModalBtn = document.getElementById('close-modal-btn');
 const assignmentForm = document.getElementById('assignment-form');
 const assignmentsListEl = document.getElementById('assignments-list');
-
-// Form Inputs
-const formTitle = document.getElementById('form-mode-title');
 const editIdInput = document.getElementById('edit-id');
-const titleInput = document.getElementById('assign-title');
-const dateAssignedInput = document.getElementById('assign-date');
-const dateDueInput = document.getElementById('assign-due');
-const maxScoreInput = document.getElementById('assign-max');
-const descInput = document.getElementById('assign-desc');
-const cancelEditBtn = document.getElementById('cancel-edit-btn');
 
-// State Variables
+// State Caches
 let activeSchoolId = localStorage.getItem('activeSchoolId');
 let currentTeacherId = null;
 const urlParams = new URLSearchParams(window.location.search);
 const activeCourseId = urlParams.get('course');
 
-let assignmentsCache = {}; 
-let rosterCache = []; 
+let assignmentsCache = []; // Array of assignment objects
+let studentCache = []; // Array of student objects
+let gradesCache = {}; // Keyed by: "studentId_assignmentId"
 
 // --- AUTHENTICATION ---
 onAuthStateChanged(auth, async (user) => {
-  if (!activeCourseId) {
-    alert("Please select a course from your dashboard.");
-    window.location.href = 'teacher-portal.html';
-    return;
-  }
+  if (!activeCourseId) return window.location.href = 'teacher-portal.html';
 
   if (user && activeSchoolId) {
     try {
-      const userProfileRef = doc(db, `schools/${activeSchoolId}/users`, user.uid);
-      const userProfileSnap = await getDoc(userProfileRef);
-
+      const userProfileSnap = await getDoc(doc(db, `schools/${activeSchoolId}/users`, user.uid));
       if (userProfileSnap.exists() && userProfileSnap.data().role === 'teacher') {
         currentTeacherId = user.uid;
         loadSchoolBranding();
-        loadCourseDetails();
-        listenToAssignments(); 
-      } else {
-        window.location.href = 'login.html';
-      }
-    } catch (error) { window.location.href = 'login.html'; }
-  } else {
-    window.location.href = 'login.html';
-  }
+        initializeGradebook(); 
+      } else { window.location.href = 'login.html'; }
+    } catch (e) { window.location.href = 'login.html'; }
+  } else { window.location.href = 'login.html'; }
 });
 
-// --- INITIAL DATA LOAD ---
-async function loadCourseDetails() {
-  const courseSnap = await getDoc(doc(db, `schools/${activeSchoolId}/courses`, activeCourseId));
-  if (courseSnap.exists()) {
+// --- MASTER DATA LOADER ---
+async function initializeGradebook() {
+  try {
+    // 1. Load Course Details
+    const courseSnap = await getDoc(doc(db, `schools/${activeSchoolId}/courses`, activeCourseId));
+    if (!courseSnap.exists()) return;
     courseTitleEl.innerText = `${courseSnap.data().courseCode}: ${courseSnap.data().courseName}`;
-    rosterCache = courseSnap.data().enrolledStudents || [];
+    const enrolledIds = courseSnap.data().enrolledStudents || [];
+
+    // 2. Load Student Profiles
+    studentCache = [];
+    for (const sId of enrolledIds) {
+      const sSnap = await getDoc(doc(db, `schools/${activeSchoolId}/users`, sId));
+      if (sSnap.exists()) {
+        studentCache.push({ id: sId, ...sSnap.data() });
+      }
+    }
+    // Sort students alphabetically by last name
+    studentCache.sort((a, b) => a.lastName.localeCompare(b.lastName));
+
+    // 3. Load Grades (One-time fetch for the grid)
+    const gradesQ = query(collection(db, `schools/${activeSchoolId}/grades`), where("courseId", "==", activeCourseId));
+    const gradesSnap = await getDocs(gradesQ);
+    gradesCache = {};
+    gradesSnap.forEach(gSnap => {
+      const gData = gSnap.data();
+      gradesCache[`${gData.studentId}_${gData.assignmentId}`] = gData;
+    });
+
+    // 4. Listen to Assignments (Real-time so modal updates instantly)
+    listenToAssignments();
+
+  } catch (error) {
+    console.error("Error initializing gradebook:", error);
   }
 }
 
-// --- REAL-TIME ASSIGNMENTS (CRUD) ---
+// --- ASSIGNMENTS LISTENER & GRID RENDERER ---
 function listenToAssignments() {
   const assignmentsRef = collection(db, `schools/${activeSchoolId}/courses/${activeCourseId}/assignments`);
   
   onSnapshot(assignmentsRef, (snapshot) => {
-    // 1. Clear UI
-    assignmentSelect.innerHTML = '<option value="" disabled selected>Select an assignment...</option>';
+    assignmentsCache = [];
     assignmentsListEl.innerHTML = '';
-    assignmentsCache = {};
 
-    if (snapshot.empty) {
-      assignmentsListEl.innerHTML = '<p style="color: #64748b; font-size: 14px;">No assignments created yet.</p>';
-      return;
-    }
-
-    // 2. Populate Dropdown & Modal List
     snapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      const id = docSnap.id;
-      assignmentsCache[id] = data;
+      const data = { id: docSnap.id, ...docSnap.data() };
+      assignmentsCache.push(data);
 
-      // Dropdown Option
-      const option = document.createElement('option');
-      option.value = id;
-      option.text = `${data.title} (Max: ${data.maxScore})`;
-      assignmentSelect.appendChild(option);
-
-      // Modal List Item
+      // Populate Modal List
       const item = document.createElement('div');
       item.className = 'assignment-list-item';
       item.innerHTML = `
+        <div><strong>${data.title}</strong> <span style="color:#64748b; font-size:12px;">(${data.maxScore} pts)</span></div>
         <div>
-          <strong>${data.title}</strong> <span style="color:#64748b; font-size:12px;">(Due: ${data.dateDue})</span>
-        </div>
-        <div>
-          <button class="btn-secondary edit-btn" data-id="${id}" style="padding: 4px 8px; font-size: 12px; width: auto; margin-right: 8px;">Edit</button>
-          <button class="btn-danger delete-btn" data-id="${id}" style="padding: 4px 8px; font-size: 12px; width: auto;">Delete</button>
+          <button class="btn-secondary edit-btn" data-id="${data.id}" style="padding: 4px 8px; font-size: 12px; width: auto; margin-right: 8px;">Edit</button>
+          <button class="btn-danger delete-btn" data-id="${data.id}" style="padding: 4px 8px; font-size: 12px; width: auto;">Delete</button>
         </div>
       `;
       assignmentsListEl.appendChild(item);
     });
 
+    // Sort assignments by Due Date (oldest first)
+    assignmentsCache.sort((a, b) => new Date(a.dateDue) - new Date(b.dateDue));
+    
     attachModalListListeners();
+    renderMatrixGrid(); // Rebuild the whole table!
   });
 }
 
-// --- ASSIGNMENT FORM LOGIC (CREATE / UPDATE) ---
+function renderMatrixGrid() {
+  if (assignmentsCache.length === 0) {
+    thead.innerHTML = '<tr><th>Student Name</th><th>No Assignments</th></tr>';
+    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding: 24px; color:#64748b;">Use the "Manage Assignments" button to create your first assignment.</td></tr>';
+    submitGradesBtn.disabled = true;
+    return;
+  }
+
+  // 1. Build Header Row
+  let headerHtml = '<tr><th>Student Name</th>';
+  assignmentsCache.forEach(assign => {
+    headerHtml += `
+      <th style="text-align: center;">
+        ${assign.title}<br>
+        <span style="font-size: 11px; font-weight: normal; color: #94a3b8;">${assign.dateDue} &bull; ${assign.maxScore} pts</span>
+      </th>`;
+  });
+  headerHtml += '</tr>';
+  thead.innerHTML = headerHtml;
+
+  // 2. Build Student Rows
+  if (studentCache.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="${assignmentsCache.length + 1}" style="text-align:center;">No students enrolled in this course.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = '';
+  studentCache.forEach(student => {
+    const tr = document.createElement('tr');
+    
+    // First Column: Sticky Name
+    let rowHtml = `<td>${student.lastName}, ${student.firstName}</td>`;
+    
+    // Grid Cells
+    assignmentsCache.forEach(assign => {
+      const gradeKey = `${student.id}_${assign.id}`;
+      const existingGrade = gradesCache[gradeKey];
+      
+      // Determine what to show in the box based on Skyward shorthand
+      let displayVal = "";
+      if (existingGrade) {
+        if (existingGrade.missing) displayVal = "M";
+        else if (existingGrade.noCount) displayVal = "NC";
+        else if (existingGrade.score !== null) displayVal = existingGrade.score;
+      }
+
+      rowHtml += `
+        <td style="text-align: center;">
+          <input type="text" class="grid-input" 
+            data-student-id="${student.id}" 
+            data-assignment-id="${assign.id}" 
+            value="${displayVal}">
+        </td>`;
+    });
+    
+    tr.innerHTML = rowHtml;
+    tbody.appendChild(tr);
+  });
+
+  submitGradesBtn.disabled = false;
+}
+
+// --- SAVING THE MATRIX ---
+submitGradesBtn.addEventListener('click', async () => {
+  submitGradesBtn.innerText = "Saving...";
+  submitGradesBtn.disabled = true;
+
+  const inputs = document.querySelectorAll('.grid-input');
+  let savePromises = [];
+  let updateCount = 0;
+
+  inputs.forEach(input => {
+    const studentId = input.getAttribute('data-student-id');
+    const assignmentId = input.getAttribute('data-assignment-id');
+    const rawValue = input.value.trim().toUpperCase(); // Capitalize for easy checking
+    const gradeKey = `${studentId}_${assignmentId}`;
+    
+    let parsedState = { score: null, missing: false, noCount: false };
+
+    // Parse Skyward Logic
+    if (rawValue === "M") parsedState.missing = true;
+    else if (rawValue === "NC" || rawValue === "EX") parsedState.noCount = true;
+    else if (rawValue !== "") {
+      const num = parseFloat(rawValue);
+      if (!isNaN(num)) parsedState.score = num;
+    }
+
+    // Only hit the database if they typed something or changed something
+    const oldState = gradesCache[gradeKey];
+    const isNewAndFilled = !oldState && rawValue !== "";
+    const isChanged = oldState && (oldState.score !== parsedState.score || oldState.missing !== parsedState.missing || oldState.noCount !== parsedState.noCount);
+
+    if (isNewAndFilled || isChanged) {
+      const gradeRef = doc(db, `schools/${activeSchoolId}/grades`, gradeKey);
+      
+      const payload = {
+        studentId: studentId,
+        courseId: activeCourseId,
+        assignmentId: assignmentId,
+        teacherId: currentTeacherId,
+        score: parsedState.score,
+        missing: parsedState.missing,
+        noCount: parsedState.noCount,
+        timestamp: serverTimestamp()
+      };
+
+      // Push to Firebase and update local cache immediately
+      savePromises.push(setDoc(gradeRef, payload, { merge: true }));
+      gradesCache[gradeKey] = payload; 
+      updateCount++;
+    }
+  });
+
+  try {
+    await Promise.all(savePromises);
+    alert(`Matrix sync complete. ${updateCount} grades updated!`);
+  } catch (error) {
+    console.error("Error saving grid:", error);
+    alert("An error occurred while saving. Please check your connection.");
+  } finally {
+    submitGradesBtn.innerText = "💾 Save All Grades";
+    submitGradesBtn.disabled = false;
+    renderMatrixGrid(); // Refresh UI to clean up formatting
+  }
+});
+
+// --- MODAL CRUD LOGIC (Unchanged) ---
 assignmentForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  
   const payload = {
-    title: titleInput.value.trim(),
-    dateAssigned: dateAssignedInput.value,
-    dateDue: dateDueInput.value,
-    maxScore: parseInt(maxScoreInput.value),
-    description: descInput.value.trim(),
+    title: document.getElementById('assign-title').value.trim(),
+    dateAssigned: document.getElementById('assign-date').value,
+    dateDue: document.getElementById('assign-due').value,
+    maxScore: parseInt(document.getElementById('assign-max').value),
+    description: document.getElementById('assign-desc').value.trim(),
     updatedAt: serverTimestamp()
   };
 
   const editingId = editIdInput.value;
-
   try {
-    if (editingId) {
-      // UPDATE
-      await updateDoc(doc(db, `schools/${activeSchoolId}/courses/${activeCourseId}/assignments`, editingId), payload);
-    } else {
-      // CREATE
-      payload.createdAt = serverTimestamp();
-      await addDoc(collection(db, `schools/${activeSchoolId}/courses/${activeCourseId}/assignments`), payload);
-    }
+    if (editingId) await updateDoc(doc(db, `schools/${activeSchoolId}/courses/${activeCourseId}/assignments`, editingId), payload);
+    else await addDoc(collection(db, `schools/${activeSchoolId}/courses/${activeCourseId}/assignments`), { ...payload, createdAt: serverTimestamp() });
     
     resetForm();
-  } catch (error) {
-    console.error("Error saving assignment:", error);
-    alert("Failed to save assignment.");
-  }
+  } catch (error) { console.error(error); alert("Failed to save assignment."); }
 });
 
 function attachModalListListeners() {
   document.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const id = e.target.getAttribute('data-id');
-      const data = assignmentsCache[id];
-      
-      formTitle.innerText = "✏️ Edit Assignment";
+      const data = assignmentsCache.find(a => a.id === id);
+      document.getElementById('form-mode-title').innerText = "✏️ Edit Assignment";
       editIdInput.value = id;
-      titleInput.value = data.title;
-      dateAssignedInput.value = data.dateAssigned;
-      dateDueInput.value = data.dateDue;
-      maxScoreInput.value = data.maxScore;
-      descInput.value = data.description || "";
-      
-      cancelEditBtn.classList.remove('hidden');
+      document.getElementById('assign-title').value = data.title;
+      document.getElementById('assign-date').value = data.dateAssigned;
+      document.getElementById('assign-due').value = data.dateDue;
+      document.getElementById('assign-max').value = data.maxScore;
+      document.getElementById('assign-desc').value = data.description || "";
+      document.getElementById('cancel-edit-btn').classList.remove('hidden');
     });
   });
 
   document.querySelectorAll('.delete-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       const id = e.target.getAttribute('data-id');
-      if(confirm("Delete this assignment? This will NOT delete grades already submitted, but they will be orphaned.")) {
+      if(confirm("Delete assignment?")) {
         await deleteDoc(doc(db, `schools/${activeSchoolId}/courses/${activeCourseId}/assignments`, id));
         if (editIdInput.value === id) resetForm();
       }
@@ -194,128 +303,13 @@ function attachModalListListeners() {
 function resetForm() {
   assignmentForm.reset();
   editIdInput.value = "";
-  formTitle.innerText = "+ Create New Assignment";
-  cancelEditBtn.classList.add('hidden');
+  document.getElementById('form-mode-title').innerText = "+ Create New Assignment";
+  document.getElementById('cancel-edit-btn').classList.add('hidden');
 }
-cancelEditBtn.addEventListener('click', resetForm);
 
-// --- MODAL CONTROLS ---
+document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
 openModalBtn.addEventListener('click', () => modal.classList.remove('hidden'));
-closeModalBtn.addEventListener('click', () => {
-  modal.classList.add('hidden');
-  resetForm();
-});
-
-
-// --- GRADEBOOK ROSTER LOGIC ---
-assignmentSelect.addEventListener('change', () => {
-  loadGradingTable(assignmentSelect.value);
-});
-
-async function loadGradingTable(assignmentId) {
-  const selectedAssignment = assignmentsCache[assignmentId];
-  if (!selectedAssignment) return;
-
-  tbody.innerHTML = '';
-  
-  if (rosterCache.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No students enrolled.</td></tr>';
-    submitGradesBtn.disabled = true;
-    return;
-  }
-
-  // Generate rows for enrolled students
-  for (const studentId of rosterCache) {
-    const studentSnap = await getDoc(doc(db, `schools/${activeSchoolId}/users`, studentId));
-    
-    if (studentSnap.exists()) {
-      const student = studentSnap.data();
-      const tr = document.createElement('tr');
-      
-      tr.innerHTML = `
-        <td><strong>${student.lastName}, ${student.firstName}</strong></td>
-        <td>
-          <div class="status-checkboxes">
-            <label><input type="checkbox" class="missing-chk" data-id="${studentId}"> Missing</label>
-            <label><input type="checkbox" class="nocount-chk" data-id="${studentId}"> No Count</label>
-          </div>
-        </td>
-        <td style="text-align: right; white-space: nowrap;">
-          <input type="number" class="grade-input" data-id="${studentId}" min="0" max="${selectedAssignment.maxScore}" placeholder="--"> 
-          <span style="color: #64748b; font-size: 14px; margin-left: 4px;">/ ${selectedAssignment.maxScore}</span>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    }
-  }
-
-  // Attach dynamic logic: If "Missing" is checked, optionally clear the score
-  document.querySelectorAll('.missing-chk').forEach(chk => {
-    chk.addEventListener('change', (e) => {
-      const id = e.target.getAttribute('data-id');
-      const scoreInput = document.querySelector(`.grade-input[data-id="${id}"]`);
-      if (e.target.checked) scoreInput.value = 0; // Auto-zero missing work
-    });
-  });
-
-  submitGradesBtn.disabled = false;
-}
-
-// --- SUBMIT GRADES TO FIREBASE ---
-submitGradesBtn.addEventListener('click', async () => {
-  const assignmentId = assignmentSelect.value;
-  if (!assignmentId) return;
-
-  submitGradesBtn.innerText = "Saving...";
-  submitGradesBtn.disabled = true;
-
-  try {
-    const rows = tbody.querySelectorAll('tr');
-    let gradesSaved = 0;
-
-    for (let row of rows) {
-      const studentId = row.querySelector('.grade-input').getAttribute('data-id');
-      const scoreInput = row.querySelector('.grade-input').value;
-      const isMissing = row.querySelector('.missing-chk').checked;
-      const isNoCount = row.querySelector('.nocount-chk').checked;
-
-      // Only write to DB if they actually entered a score or flagged it
-      if (scoreInput !== "" || isMissing || isNoCount) {
-        
-        // We use setDoc with a custom ID (studentId_assignmentId) so if the teacher 
-        // grades this assignment again tomorrow, it UPDATES the record instead of duplicating it.
-        const gradeDocId = `${studentId}_${assignmentId}`;
-        const gradeRef = doc(db, `schools/${activeSchoolId}/grades`, gradeDocId);
-
-        await setDoc(gradeRef, {
-          studentId: studentId,
-          courseId: activeCourseId,
-          assignmentId: assignmentId,
-          teacherId: currentTeacherId,
-          score: scoreInput === "" ? null : parseFloat(scoreInput),
-          missing: isMissing,
-          noCount: isNoCount,
-          timestamp: serverTimestamp()
-        }, { merge: true });
-
-        gradesSaved++;
-      }
-    }
-
-    alert(`Successfully saved/updated ${gradesSaved} grades!`);
-    
-    // Clear the table to confirm submission and force them to re-select
-    assignmentSelect.value = "";
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #64748b;">Grades saved! Select an assignment to continue grading.</td></tr>';
-
-  } catch (error) {
-    console.error("Error submitting grades:", error);
-    alert("Failed to save grades.");
-  } finally {
-    submitGradesBtn.innerText = "Save Grades";
-    submitGradesBtn.disabled = true;
-  }
-});
+closeModalBtn.addEventListener('click', () => { modal.classList.add('hidden'); resetForm(); });
 
 // --- BRANDING & LOGOUT ---
 async function loadSchoolBranding() {

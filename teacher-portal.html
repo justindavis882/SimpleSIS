@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Portal | SimpleSIS</title>
+  <link rel="stylesheet" href="teacher-portal.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2 id="sidebar-brand-name">SimpleSIS</h2>
+      </div>
+      <nav>
+        <a href="teacher-portal.html" class="active">My Dashboard</a>
+        <a href="#">Take Attendance</a>
+        <a href="#">Gradebook</a>
+        <a href="#">My Profile</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn-secondary">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header">
+        <div>
+          <h1 id="welcome-message">Welcome, Educator</h1>
+          <p id="display-school-name" class="subtitle">Loading school context...</p>
+        </div>
+        <div class="user-profile">
+          <span id="display-teacher-email">teacher@school.edu</span>
+          <div class="avatar" id="teacher-avatar">T</div>
+        </div>
+      </header>
+
+      <section class="section-header">
+        <h2>My Active Courses</h2>
+      </section>
+
+      <section class="courses-grid" id="teacher-courses-container">
+        <p style="color: #64748b;">Loading your assigned courses...</p>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="teacher-portal.js"></script>
+</body>
+</html>

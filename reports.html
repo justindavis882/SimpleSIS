@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports Engine | SimpleSIS</title>
+  <link rel="stylesheet" href="teacher-portal.css">
+  <style>
+    /* Print Styles to hide the UI and only show the report */
+    @media print {
+      .sidebar, .top-header, .report-controls, .table-container, .modal, button { display: none !important; }
+      .dashboard-layout { display: block; height: auto; }
+      .main-content { padding: 0; overflow: visible; }
+      #printable-report-container { display: block !important; width: 100%; }
+      body { background: white; }
+    }
+
+    #printable-report-container { display: none; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 20px;}
+    .report-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid var(--primary-color); padding-bottom: 20px; }
+    .report-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .report-table th, .report-table td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; font-size: 14px; }
+    .report-table th { background: #f8fafc; color: #0f172a; }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2 id="sidebar-brand-name">SimpleSIS</h2>
+      </div>
+      <nav id="dynamic-sidebar">
+        <p style="padding: 12px 24px; color: #94a3b8; font-size: 14px;">Loading menu...</p>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn-secondary">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header">
+        <div>
+          <h1>Reports Engine</h1>
+          <p class="subtitle">Run and manage system data reports.</p>
+        </div>
+        <div class="header-actions">
+          <button id="open-template-modal-btn" class="btn-primary hidden">+ Create Template</button> 
+        </div>
+      </header>
+
+      <section class="table-container report-controls">
+        <table id="templates-table">
+          <thead>
+            <tr>
+              <th>Report Name</th>
+              <th>Archetype</th>
+              <th>Description</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="templates-tbody">
+            <tr><td colspan="4" style="text-align: center;">Loading templates...</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="printable-report-container">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;" class="report-controls">
+          <button id="close-report-btn" class="btn-secondary" style="width: auto;">&larr; Back to Templates</button>
+          <button onclick="window.print()" class="btn-primary" style="width: auto;">🖨️ Print Report</button>
+        </div>
+        <div id="report-output"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="template-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Report Template Builder</h2>
+        <button id="close-modal-btn" class="close-btn">&times;</button>
+      </div>
+      <form id="template-form">
+        <div class="input-group">
+          <label for="report-name">Report Name</label>
+          <input type="text" id="report-name" placeholder="e.g., Missing Assignments List" required>
+        </div>
+        <div class="input-group">
+          <label for="report-archetype">Data Archetype</label>
+          <select id="report-archetype" required>
+            <option value="missing_assignments">Course: Missing Assignments</option>
+            <option value="course_roster">Course: Full Roster & Grades</option>
+            <option value="student_progress">Student: Single Student Progress</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="report-desc">Description (Instructions for Teachers)</label>
+          <input type="text" id="report-desc" placeholder="Generates a list of students with missing work for a specific class." required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cancel-btn" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn-primary">Save Template</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="run-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="run-modal-title">Run Report</h2>
+        <button id="close-run-btn" class="close-btn">&times;</button>
+      </div>
+      <div class="input-group">
+        <label id="run-target-label" for="run-target-select">Select Target</label>
+        <select id="run-target-select" required>
+          <option value="" disabled selected>Loading...</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="cancel-run-btn" class="btn-secondary">Cancel</button>
+        <button type="button" id="generate-report-btn" class="btn-primary">Generate</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="reports.js"></script>
+</body>
+</html>

@@ -38,28 +38,52 @@ const submitBtn = document.getElementById('submit-user-btn');
 let activeSchoolId = localStorage.getItem('activeSchoolId');
 
 // --- AUTHENTICATION & ROLE CHECK ---
+// --- DIAGNOSTIC AUTHENTICATION & ROLE CHECK ---
 onAuthStateChanged(auth, async (user) => {
-  if (user && activeSchoolId) {
-    try {
-      // Security Check: Verify Role
-      const userProfileRef = doc(db, `schools/${activeSchoolId}/users`, user.uid);
-      const userProfileSnap = await getDoc(userProfileRef);
+  // 1. Grab the ID inside the function just to be safe
+  const activeSchoolId = localStorage.getItem('activeSchoolId');
 
-      if (userProfileSnap.exists() && userProfileSnap.data().role === 'admin') {
-        // Access Granted
-        schoolNameEl.innerText = `Managing School ID: ${activeSchoolId}`;
-        loadUsers();
-      } else {
-        // Access Denied
-        alert("Security Violation: Admins only.");
-        window.location.href = 'login.html';
+  // 2. Check if Firebase lost the user
+  if (!user) {
+    alert("DEBUG: Firebase says no user is logged in. Session was lost!");
+    window.location.href = 'login.html';
+    return;
+  }
+
+  // 3. Check if LocalStorage lost the School ID
+  if (!activeSchoolId) {
+    alert("DEBUG: The activeSchoolId is missing from your browser memory.");
+    window.location.href = 'login.html';
+    return;
+  }
+
+  // 4. Try to read the database profile
+  try {
+    const userProfileRef = doc(db, `schools/${activeSchoolId}/users`, user.uid);
+    const userProfileSnap = await getDoc(userProfileRef);
+
+    if (userProfileSnap.exists() && userProfileSnap.data().role === 'admin') {
+      
+      // SUCCESS! Load the appropriate page data
+      if (document.getElementById('display-school-name')) {
+        document.getElementById('display-school-name').innerText = `Managing School ID: ${activeSchoolId}`;
       }
-    } catch (error) {
-      console.error("Auth error:", error);
+      
+      // Run the specific page functions if they exist
+      if (typeof loadUsers === 'function') loadUsers();
+      if (typeof populateTeacherDropdown === 'function') populateTeacherDropdown();
+      if (typeof loadCourses === 'function') loadCourses();
+
+    } else {
+      // They exist, but aren't an admin
+      const roleFound = userProfileSnap.exists() ? userProfileSnap.data().role : "No Profile Document Found";
+      alert(`DEBUG: Access Denied. Your role is listed as: ${roleFound}`);
       window.location.href = 'login.html';
     }
-  } else {
-    window.location.href = 'login.html';
+  } catch (error) {
+    // A database rule blocked the read!
+    alert(`DEBUG: Firestore Error! Check your browser's console (F12). Error: ${error.message}`);
+    console.error("Diagnostic Auth Error:", error);
   }
 });
 

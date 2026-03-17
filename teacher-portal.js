@@ -79,19 +79,19 @@ function loadMyCourses(teacherUid) {
 
       const card = document.createElement('div');
       card.className = 'course-card';
+      
+      // We add a button row at the bottom of the card
       card.innerHTML = `
         <span class="course-code">${course.courseCode}</span>
         <h3 class="course-name">${course.courseName}</h3>
         <p class="course-term">${course.term}</p>
+        <div style="margin-top: 20px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn-primary" style="flex: 1;" onclick="window.location.href='take-attendance.html?course=${courseId}'">Attendance</button>
+          <button class="btn-secondary" style="flex: 1;" onclick="window.location.href='gradebook.html?course=${courseId}'">Gradebook</button>
+        </div>
       `;
       
-      // Make the whole card clickable for future features (like taking attendance)
-      card.addEventListener('click', () => {
-        // We will pass the courseId in the URL when we build the next page!
-        window.location.href = `take-attendance.html?course=${courseId}`;
-        console.log("Clicked course:", courseId);
-      });
-
+      coursesContainer.appendChild(card);
       coursesContainer.appendChild(card);
     });
   }, (error) => {

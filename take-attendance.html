@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Take Attendance | SimpleSIS</title>
+  <link rel="stylesheet" href="teacher-portal.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2 id="sidebar-brand-name">SimpleSIS</h2>
+      </div>
+      <nav>
+        <a href="teacher-portal.html">My Dashboard</a>
+        <a href="#" class="active">Take Attendance</a>
+        <a href="#">Gradebook</a>
+        <a href="#">My Profile</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn-secondary">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header">
+        <div>
+          <h1 id="course-title-display">Loading Course...</h1>
+          <p class="subtitle" id="attendance-date-display">Today's Date</p>
+        </div>
+        <div class="header-actions">
+          <button id="submit-attendance-btn" class="btn-primary">Submit Attendance</button>
+        </div>
+      </header>
+
+      <section class="table-container">
+        <table id="roster-table">
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Email</th>
+              <th style="text-align: right;">Attendance Status</th>
+            </tr>
+          </thead>
+          <tbody id="roster-tbody">
+            <tr>
+              <td colspan="3" style="text-align: center;">Loading student roster...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="take-attendance.js"></script>
+</body>
+</html>

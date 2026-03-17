@@ -66,6 +66,8 @@ onAuthStateChanged(auth, async (user) => {
       // SUCCESS! Load the appropriate page data
       if (document.getElementById('display-school-name')) {
         document.getElementById('display-school-name').innerText = `Managing School ID: ${activeSchoolId}`;
+
+        loadSchoolBranding();
       }
       
       // Run the specific page functions if they exist
@@ -207,3 +209,27 @@ logoutBtn.addEventListener('click', () => {
     localStorage.removeItem('activeSchoolId');
   });
 });
+
+// --- LOAD CUSTOM BRANDING ---
+async function loadSchoolBranding() {
+  try {
+    // Note: ensure 'doc' and 'getDoc' are imported from firestore at the top of your file!
+    const schoolRef = doc(db, "schools", activeSchoolId);
+    const schoolSnap = await getDoc(schoolRef);
+    
+    if (schoolSnap.exists() && schoolSnap.data().branding) {
+      const branding = schoolSnap.data().branding;
+      
+      if (branding.primaryColor) {
+        // 1. Override the CSS variables globally on the page
+        document.documentElement.style.setProperty('--primary-color', branding.primaryColor);
+        
+        // 2. Directly target the sidebar text as a fallback
+        const brandText = document.querySelector('.sidebar .brand h2');
+        if (brandText) brandText.style.color = branding.primaryColor;
+      }
+    }
+  } catch (error) {
+    console.error("Error loading branding:", error);
+  }
+}

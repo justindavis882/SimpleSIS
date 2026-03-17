@@ -92,7 +92,11 @@
       </div>
 
       <form id="assignment-form" style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
-        <h3 id="form-mode-title" style="margin-bottom: 16px; font-size: 16px; color: var(--primary-color);">+ Create New Assignment</h3>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 id="form-mode-title" style="font-size: 16px; margin: 0; color: var(--primary-color);">+ Create New Assignment</h3>
+          <button type="button" id="open-import-modal-btn" class="btn-secondary" style="padding: 6px 12px; font-size: 13px; width: auto;">📥 Import Assignments</button>
+        </div>
         <input type="hidden" id="edit-id">
 
         <div class="input-group">
@@ -126,6 +130,31 @@
 
       <h3>Course Assignments</h3>
       <div id="assignments-list" style="margin-top: 12px;"></div>
+    </div>
+  </div>
+
+  <div id="import-modal" class="modal hidden" style="z-index: 1001;">
+    <div class="modal-content" style="width: 500px;">
+      <div class="modal-header">
+        <h2>Import Assignments</h2>
+        <button id="close-import-btn" class="close-btn">&times;</button>
+      </div>
+      
+      <div class="input-group">
+        <label for="import-course-select">Select Source Course</label>
+        <select id="import-course-select" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <option value="" disabled selected>Loading your courses...</option>
+        </select>
+      </div>
+      
+      <div id="import-assignments-list" style="max-height: 250px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px; background: #f8fafc;">
+        <p style="color: #64748b; font-size: 14px; text-align: center;">Select a course to view assignments.</p>
+      </div>
+      
+      <div style="display: flex; justify-content: flex-end; gap: 12px;">
+        <button type="button" id="cancel-import-btn" class="btn-secondary" style="width: auto;">Cancel</button>
+        <button type="button" id="confirm-import-btn" class="btn-primary" style="width: auto;" disabled>Import Selected</button>
+      </div>
     </div>
   </div>
 

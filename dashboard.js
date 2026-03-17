@@ -37,6 +37,7 @@ onAuthStateChanged(auth, async (user) => {
 
       if (userProfileSnap.exists() && userProfileSnap.data().role === 'admin') {
         const userData = userProfileSnap.data();
+        loadSchoolBranding();
         
         // Populate header with their actual name and role
         adminEmailEl.innerText = `${userData.firstName} ${userData.lastName} (Admin)`;
@@ -97,3 +98,27 @@ logoutBtn.addEventListener('click', () => {
     console.error("Logout Error:", error);
   });
 });
+
+// --- LOAD CUSTOM BRANDING ---
+async function loadSchoolBranding() {
+  try {
+    // Note: ensure 'doc' and 'getDoc' are imported from firestore at the top of your file!
+    const schoolRef = doc(db, "schools", activeSchoolId);
+    const schoolSnap = await getDoc(schoolRef);
+    
+    if (schoolSnap.exists() && schoolSnap.data().branding) {
+      const branding = schoolSnap.data().branding;
+      
+      if (branding.primaryColor) {
+        // 1. Override the CSS variables globally on the page
+        document.documentElement.style.setProperty('--primary-color', branding.primaryColor);
+        
+        // 2. Directly target the sidebar text as a fallback
+        const brandText = document.querySelector('.sidebar .brand h2');
+        if (brandText) brandText.style.color = branding.primaryColor;
+      }
+    }
+  } catch (error) {
+    console.error("Error loading branding:", error);
+  }
+}

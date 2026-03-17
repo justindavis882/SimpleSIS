@@ -76,38 +76,41 @@ async function loadCourseDetails() {
 // --- LOAD ROSTER ---
 async function loadStudentRoster() {
   try {
-    // TEMPORARY: Query all active students. Later, we'll filter by actual enrollment.
-    const q = query(
-      collection(db, `schools/${activeSchoolId}/users`),
-      where("role", "==", "student"),
-      where("isActive", "==", true)
-    );
-    
-    const querySnapshot = await getDocs(q);
+    // 1. Fetch the course document to get the enrolled array
+    const courseSnap = await getDoc(doc(db, `schools/${activeSchoolId}/courses`, activeCourseId));
+    const courseData = courseSnap.data();
+    const enrolledIds = courseData.enrolledStudents || []; // Default to empty if missing
+
     tbody.innerHTML = ''; 
 
-    if (querySnapshot.empty) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No students found in the system. Create some in the Admin portal!</td></tr>';
+    // 2. If the array is empty, show a message
+    if (enrolledIds.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: #64748b;">No students are enrolled in this course yet. Check with an Admin.</td></tr>';
+      submitBtn.disabled = true;
       return;
     }
 
-    querySnapshot.forEach((docSnap) => {
-      const student = docSnap.data();
-      const studentId = docSnap.id;
-
-      const tr = document.createElement('tr');
-      // We use a radio button group where the "name" attribute locks them together per student
-      tr.innerHTML = `
-        <td><strong>${student.lastName}, ${student.firstName}</strong></td>
-        <td>${student.email}</td>
-        <td style="text-align: right; display: flex; gap: 16px; justify-content: flex-end;">
-          <label><input type="radio" name="attend_${studentId}" value="present" checked> Present</label>
-          <label><input type="radio" name="attend_${studentId}" value="absent"> Absent</label>
-          <label><input type="radio" name="attend_${studentId}" value="tardy"> Tardy</label>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
+    // 3. Fetch ONLY the students whose IDs are in that array
+    for (const studentId of enrolledIds) {
+      const studentSnap = await getDoc(doc(db, `schools/${activeSchoolId}/users`, studentId));
+      
+      if (studentSnap.exists()) {
+        const student = studentSnap.data();
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+          <td><strong>${student.lastName}, ${student.firstName}</strong></td>
+          <td>${student.email}</td>
+          <td style="text-align: right; display: flex; gap: 16px; justify-content: flex-end;">
+            <label><input type="radio" name="attend_${studentId}" value="present" checked> Present</label>
+            <label><input type="radio" name="attend_${studentId}" value="absent"> Absent</label>
+            <label><input type="radio" name="attend_${studentId}" value="tardy"> Tardy</label>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+    submitBtn.disabled = false; // Enable submit if we found students
 
   } catch (error) {
     console.error("Error loading roster:", error);

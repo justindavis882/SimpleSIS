@@ -6,10 +6,16 @@
   <title>Gradebook | SimpleSIS</title>
   <link rel="stylesheet" href="teacher-portal.css">
   <style>
-    /* A few specific tweaks for the gradebook inputs */
     .grade-input { width: 80px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center; font-size: 15px; }
     .grade-input:focus { outline: none; border-color: var(--primary-color); }
-    .assignment-controls { background: white; padding: 24px; border-radius: 12px; border: 1px solid #eaebed; margin-bottom: 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; gap: 24px; align-items: flex-end;}
+    .grade-input:disabled { background-color: #f1f5f9; cursor: not-allowed; }
+    
+    .assignment-controls { background: white; padding: 24px; border-radius: 12px; border: 1px solid #eaebed; margin-bottom: 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; gap: 24px; align-items: center;}
+    .status-checkboxes { display: flex; gap: 12px; font-size: 13px; color: #475569; align-items: center; justify-content: flex-end;}
+    
+    /* Modal Specifics */
+    textarea { font-family: inherit; resize: vertical; }
+    .assignment-list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
   </style>
 </head>
 <body>
@@ -34,21 +40,22 @@
       <header class="top-header">
         <div>
           <h1 id="course-title-display">Loading Course...</h1>
-          <p class="subtitle">New Assignment Entry</p>
+          <p class="subtitle">Gradebook & Assignments</p>
         </div>
         <div class="header-actions">
-          <button id="submit-grades-btn" class="btn-primary" disabled>Submit Grades</button>
+          <button id="submit-grades-btn" class="btn-primary" disabled>Save Grades</button>
         </div>
       </header>
 
       <section class="assignment-controls">
-        <div style="flex: 2;">
-          <label for="assignment-name" style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: #475569;">Assignment Name</label>
-          <input type="text" id="assignment-name" placeholder="e.g., Chapter 4 Quiz" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;" required>
-        </div>
         <div style="flex: 1;">
-          <label for="max-score" style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: #475569;">Possible Points</label>
-          <input type="number" id="max-score" value="100" min="1" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;" required>
+          <label for="assignment-select" style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: #475569;">Select Assignment to Grade</label>
+          <select id="assignment-select" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <option value="" disabled selected>Loading assignments...</option>
+          </select>
+        </div>
+        <div>
+          <button id="open-assignment-modal-btn" class="btn-secondary" style="margin-top: 22px;">⚙️ Manage Assignments</button>
         </div>
       </section>
 
@@ -57,17 +64,66 @@
           <thead>
             <tr>
               <th>Student Name</th>
-              <th style="text-align: right;">Score Given</th>
+              <th style="text-align: right;">Status Flags</th>
+              <th style="text-align: right; width: 150px;">Score Given</th>
             </tr>
           </thead>
           <tbody id="roster-tbody">
             <tr>
-              <td colspan="2" style="text-align: center; color: #64748b;">Loading roster...</td>
+              <td colspan="3" style="text-align: center; color: #64748b;">Please select an assignment to enter grades.</td>
             </tr>
           </tbody>
         </table>
       </section>
     </main>
+  </div>
+
+  <div id="assignment-modal" class="modal hidden">
+    <div class="modal-content" style="width: 650px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h2>Assignment Manager</h2>
+        <button id="close-modal-btn" class="close-btn">&times;</button>
+      </div>
+
+      <form id="assignment-form" style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
+        <h3 id="form-mode-title" style="margin-bottom: 16px; font-size: 16px; color: var(--primary-color);">+ Create New Assignment</h3>
+        <input type="hidden" id="edit-id">
+
+        <div class="input-group">
+          <label for="assign-title">Assignment Title</label>
+          <input type="text" id="assign-title" required>
+        </div>
+
+        <div style="display: flex; gap: 16px; margin-bottom: 20px;">
+          <div style="flex: 1;">
+            <label for="assign-date" style="display: block; margin-bottom: 6px; font-size: 14px; color: #475569;">Date Assigned</label>
+            <input type="date" id="assign-date" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;" required>
+          </div>
+          <div style="flex: 1;">
+            <label for="assign-due" style="display: block; margin-bottom: 6px; font-size: 14px; color: #475569;">Date Due</label>
+            <input type="date" id="assign-due" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;" required>
+          </div>
+          <div style="flex: 1;">
+            <label for="assign-max" style="display: block; margin-bottom: 6px; font-size: 14px; color: #475569;">Max Score</label>
+            <input type="number" id="assign-max" min="1" value="100" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;" required>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="assign-desc">Description (Optional)</label>
+          <textarea id="assign-desc" rows="2" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <button type="button" id="cancel-edit-btn" class="btn-secondary hidden" style="width: auto;">Cancel Edit</button>
+          <button type="submit" id="save-assignment-btn" class="btn-primary" style="width: auto;">Save Assignment</button>
+        </div>
+      </form>
+
+      <h3>Course Assignments</h3>
+      <div id="assignments-list" style="margin-top: 12px;">
+        </div>
+    </div>
   </div>
 
   <script type="module" src="gradebook.js"></script>

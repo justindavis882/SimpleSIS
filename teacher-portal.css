@@ -81,3 +81,34 @@ nav a:hover, nav a.active { background-color: #e8f0fe; color: var(--primary-colo
   cursor: pointer; 
   color: #64748b; 
 }
+
+/* --- DATA TABLES --- */
+.table-container { 
+  background: white; 
+  border-radius: 12px; 
+  border: 1px solid #eaebed; 
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05); 
+  overflow: hidden; 
+}
+table { 
+  width: 100%; /* This is what forces it to stretch! */
+  border-collapse: collapse; 
+  text-align: left; 
+}
+thead { 
+  background-color: #f8fafc; 
+  border-bottom: 2px solid #e2e8f0; 
+}
+th { 
+  padding: 16px 24px; 
+  font-size: 13px; 
+  text-transform: uppercase; 
+  color: #64748b; 
+  letter-spacing: 0.5px; 
+}
+td { 
+  padding: 16px 24px; 
+  border-bottom: 1px solid #e2e8f0; 
+  vertical-align: middle; 
+  font-size: 14px;
+}

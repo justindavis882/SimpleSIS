@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gradebook | SimpleSIS</title>
+  <link rel="stylesheet" href="teacher-portal.css">
+  <style>
+    /* A few specific tweaks for the gradebook inputs */
+    .grade-input { width: 80px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center; font-size: 15px; }
+    .grade-input:focus { outline: none; border-color: var(--primary-color); }
+    .assignment-controls { background: white; padding: 24px; border-radius: 12px; border: 1px solid #eaebed; margin-bottom: 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; gap: 24px; align-items: flex-end;}
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2 id="sidebar-brand-name">SimpleSIS</h2>
+      </div>
+      <nav>
+        <a href="teacher-portal.html">My Dashboard</a>
+        <a href="teacher-portal.html">Take Attendance</a>
+        <a href="#" class="active">Gradebook</a>
+        <a href="#">My Profile</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn-secondary">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header">
+        <div>
+          <h1 id="course-title-display">Loading Course...</h1>
+          <p class="subtitle">New Assignment Entry</p>
+        </div>
+        <div class="header-actions">
+          <button id="submit-grades-btn" class="btn-primary" disabled>Submit Grades</button>
+        </div>
+      </header>
+
+      <section class="assignment-controls">
+        <div style="flex: 2;">
+          <label for="assignment-name" style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: #475569;">Assignment Name</label>
+          <input type="text" id="assignment-name" placeholder="e.g., Chapter 4 Quiz" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;" required>
+        </div>
+        <div style="flex: 1;">
+          <label for="max-score" style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: #475569;">Possible Points</label>
+          <input type="number" id="max-score" value="100" min="1" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;" required>
+        </div>
+      </section>
+
+      <section class="table-container">
+        <table id="roster-table">
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th style="text-align: right;">Score Given</th>
+            </tr>
+          </thead>
+          <tbody id="roster-tbody">
+            <tr>
+              <td colspan="2" style="text-align: center; color: #64748b;">Loading roster...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="gradebook.js"></script>
+</body>
+</html>

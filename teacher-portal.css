@@ -1,0 +1,46 @@
+:root {
+  --primary-color: #1a73e8;
+  --primary-hover: #1557b0;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { background-color: #f0f2f5; color: #333; }
+
+/* Layout & Sidebar */
+.dashboard-layout { display: flex; height: 100vh; }
+.sidebar { width: 260px; background-color: #ffffff; border-right: 1px solid #dadce0; display: flex; flex-direction: column; }
+.brand { padding: 24px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 12px;}
+.brand h2 { color: var(--primary-color); font-size: 22px; }
+nav { display: flex; flex-direction: column; padding: 16px 0; flex-grow: 1; }
+nav a { padding: 12px 24px; text-decoration: none; color: #5f6368; font-weight: 500; transition: background 0.2s; }
+nav a:hover, nav a.active { background-color: #e8f0fe; color: var(--primary-color); border-right: 3px solid var(--primary-color); }
+.sidebar-footer { padding: 24px; border-top: 1px solid #eee; }
+
+/* Main Content */
+.main-content { flex-grow: 1; padding: 32px; overflow-y: auto; }
+.top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+.top-header h1 { font-size: 28px; color: #202124; }
+.subtitle { color: #5f6368; margin-top: 4px; }
+
+/* User Profile */
+.user-profile { display: flex; align-items: center; gap: 12px; font-weight: 500; color: #5f6368; }
+.avatar { width: 40px; height: 40px; background-color: var(--primary-color); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; font-weight: bold; text-transform: uppercase;}
+
+/* Buttons */
+.btn-primary, .btn-secondary { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; }
+.btn-primary { background: var(--primary-color); color: white; transition: background 0.2s;}
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-secondary { background: transparent; border: 1px solid #cbd5e1; color: #475569; width: 100%;}
+.btn-secondary:hover { background: #f1f5f9; }
+
+/* Section Header */
+.section-header { margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+.section-header h2 { font-size: 18px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Course Cards */
+.courses-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+.course-card { background: white; border-radius: 12px; border: 1px solid #eaebed; padding: 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; display: flex; flex-direction: column;}
+.course-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: var(--primary-color); }
+.course-code { font-size: 12px; font-weight: 600; color: var(--primary-color); background: #e8f0fe; padding: 4px 8px; border-radius: 4px; align-self: flex-start; margin-bottom: 12px; }
+.course-name { font-size: 18px; color: #202124; margin-bottom: 8px; font-weight: 600; }
+.course-term { font-size: 14px; color: #64748b; }

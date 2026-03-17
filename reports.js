@@ -233,11 +233,25 @@ async function buildCourseGrades(courseId, showMissing, showAll) {
 
 async function buildStudentData(studentId, mods) {
   let output = '';
+  
+  // 1. Roster & Details
   if (mods.includes('roster')) {
     const s = await getDoc(doc(db, `schools/${activeSchoolId}/users`, studentId));
     output += `<div class="report-section"><h3>Student Profile</h3><p><strong>Name:</strong> ${s.data().lastName}, ${s.data().firstName}<br><strong>Email:</strong> ${s.data().email}</p></div>`;
   }
   
+  // 2. NEW: Student Schedule (Reverse Lookup)
+  if (mods.includes('roster')) {
+    const scheduleQ = query(collection(db, `schools/${activeSchoolId}/courses`), where("enrolledStudents", "array-contains", studentId));
+    const scheduleSnap = await getDocs(scheduleQ);
+    let schedRows = '';
+    scheduleSnap.forEach(c => {
+      schedRows += `<tr><td>${c.data().courseCode}</td><td>${c.data().courseName}</td><td>${c.data().term}</td></tr>`;
+    });
+    output += `<div class="report-section"><h3>Current Schedule</h3><table class="report-table"><thead><tr><th>Code</th><th>Course</th><th>Term</th></tr></thead><tbody>${schedRows || '<tr><td colspan="3">Not enrolled in any courses.</td></tr>'}</tbody></table></div>`;
+  }
+  
+  // 3. Grades & Missing Work (Progress Report / Report Card)
   if (mods.includes('grades') || mods.includes('missing')) {
     const gradesSnap = await getDocs(query(collection(db, `schools/${activeSchoolId}/grades`), where("studentId", "==", studentId)));
     let rows = '';
@@ -248,15 +262,38 @@ async function buildStudentData(studentId, mods) {
       if (!mods.includes('grades') && !isMissing) continue;
 
       const a = await getDoc(doc(db, `schools/${activeSchoolId}/courses/${data.courseId}/assignments`, data.assignmentId));
-      const assignName = a.exists() ? a.data().title : 'Unknown';
+      const assignName = a.exists() ? a.data().title : 'Unknown Assignment';
 
       let statusHtml = data.score !== null ? data.score : '--';
       if (isMissing) statusHtml = '<span style="color: #d93025; font-weight:bold;">Missing</span>';
+      if (data.noCount) statusHtml = 'No Count';
       
       rows += `<tr><td>${assignName}</td><td>${statusHtml}</td></tr>`;
     }
-    output += `<div class="report-section"><h3>Academic Progress</h3><table class="report-table"><thead><tr><th>Assignment</th><th>Score</th></tr></thead><tbody>${rows || '<tr><td colspan="2">No matching records.</td></tr>'}</tbody></table></div>`;
+    output += `<div class="report-section"><h3>Academic Records</h3><table class="report-table"><thead><tr><th>Assignment</th><th>Score</th></tr></thead><tbody>${rows || '<tr><td colspan="2">No matching records.</td></tr>'}</tbody></table></div>`;
   }
+
+  // 4. NEW: Attendance History
+  if (mods.includes('attendance')) {
+    const attSnap = await getDocs(query(collection(db, `schools/${activeSchoolId}/attendance`), where("studentId", "==", studentId)));
+    let attRows = '';
+    
+    // Sort attendance by date (newest first)
+    const attRecords = [];
+    attSnap.forEach(doc => attRecords.push(doc.data()));
+    attRecords.sort((a, b) => new Date(b.dateString) - new Date(a.dateString));
+
+    for (const record of attRecords) {
+      const c = await getDoc(doc(db, `schools/${activeSchoolId}/courses`, record.courseId));
+      const courseName = c.exists() ? c.data().courseName : 'Unknown Course';
+      
+      let badgeColor = record.status === 'present' ? '#0f9d58' : (record.status === 'absent' ? '#d93025' : '#f59e0b');
+      
+      attRows += `<tr><td>${record.dateString}</td><td>${courseName}</td><td><strong style="color: ${badgeColor}; text-transform: capitalize;">${record.status}</strong></td></tr>`;
+    }
+    output += `<div class="report-section"><h3>Attendance History</h3><table class="report-table"><thead><tr><th>Date</th><th>Course</th><th>Status</th></tr></thead><tbody>${attRows || '<tr><td colspan="3">No attendance records found.</td></tr>'}</tbody></table></div>`;
+  }
+
   return output;
 }
 

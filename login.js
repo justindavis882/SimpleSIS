@@ -42,21 +42,37 @@ loginForm.addEventListener('submit', async (e) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // 2. Security Verification: Does this user actually belong to this school?
-    // We check the specific subcollection: /schools/{schoolId}/users/{uid}
+    // 2. Security Verification: Does this user belong to this school?
     const userProfileRef = doc(db, `schools/${schoolId}/users`, user.uid);
     const userProfileSnap = await getDoc(userProfileRef);
 
     if (userProfileSnap.exists()) {
-      // Success! They are authenticated AND they belong to this school.
-      // 3. Save the active school context so the dashboard knows what to load
+      const userData = userProfileSnap.data();
+
+      // 3. Check if account is suspended
+      if (userData.isActive === false) {
+        await auth.signOut();
+        showError("Account Suspended. Please contact your school administrator.");
+        return;
+      }
+
+      // 4. Save the active school context 
       localStorage.setItem('activeSchoolId', schoolId);
+      localStorage.setItem('userRole', userData.role); 
       
-      // 4. Send them to the dashboard
-      window.location.href = 'dashboard.html';
+      // 5. Smart Role-Based Routing!
+      if (userData.role === 'admin') {
+        window.location.href = 'dashboard.html';
+      } else if (userData.role === 'teacher') {
+        window.location.href = 'teacher-portal.html'; 
+      } else if (userData.role === 'student') {
+        window.location.href = 'student-portal.html'; 
+      } else {
+        await auth.signOut();
+        showError("Invalid role assignment.");
+      }
+
     } else {
-      // They logged in, but don't belong to this school ID.
-      // Force a logout and show an error.
       await auth.signOut();
       showError("Access Denied: You are not registered at this School ID.");
     }

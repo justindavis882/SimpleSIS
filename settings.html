@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Settings | SimpleSIS</title>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2 id="sidebar-brand-name">SimpleSIS</h2>
+      </div>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="users.html">Users & Roles</a>
+        <a href="courses.html">Courses & Pacing</a>
+        <a href="attendance.html">Live Attendance</a>
+        <a href="settings.html" class="active">Settings</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn-secondary">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header">
+        <div>
+          <h1>System Settings</h1>
+          <p id="display-school-name" class="subtitle">Loading configuration...</p>
+        </div>
+        <div class="header-actions">
+          <button id="save-settings-btn" class="btn-primary">Save All Changes</button>
+        </div>
+      </header>
+
+      <div class="settings-grid">
+        
+        <section class="settings-card">
+          <h2>School Profile</h2>
+          <div class="input-group">
+            <label for="setting-school-name">Official Institution Name</label>
+            <input type="text" id="setting-school-name" required>
+          </div>
+          <div class="input-group">
+            <label for="setting-admin-email">Primary Contact Email</label>
+            <input type="email" id="setting-admin-email" required>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <h2>Academic Configuration</h2>
+          <div class="input-group">
+            <label for="setting-current-term">Active Term</label>
+            <input type="text" id="setting-current-term" placeholder="e.g., Spring 2026" required>
+          </div>
+          <div class="input-group">
+            <label for="setting-status">System Status</label>
+            <select id="setting-status">
+              <option value="active">Active (Users can log in)</option>
+              <option value="maintenance">Maintenance (Admins only)</option>
+            </select>
+            <p class="help-text">Use this to temporarily lock out non-admins during grading rollovers.</p>
+          </div>
+        </section>
+
+        <section class="settings-card branding-card">
+          <h2>White-Label Branding</h2>
+          <p class="help-text" style="margin-bottom: 20px;">Customize the platform to match your school's identity.</p>
+          
+          <div class="input-group">
+            <label for="setting-logo-url">Logo URL (Public Image Link)</label>
+            <input type="url" id="setting-logo-url" placeholder="https://yoursite.com/logo.png">
+          </div>
+          
+          <div class="color-pickers">
+            <div class="input-group">
+              <label for="setting-color-primary">Primary Theme Color</label>
+              <div class="color-input-wrapper">
+                <input type="color" id="setting-color-primary" value="#1a73e8">
+                <span id="hex-primary">#1a73e8</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="settings.js"></script>
+</body>
+</html>

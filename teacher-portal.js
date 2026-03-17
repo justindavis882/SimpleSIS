@@ -25,36 +25,33 @@ const logoutBtn = document.getElementById('logout-btn');
 
 let activeSchoolId = localStorage.getItem('activeSchoolId');
 
-// --- AUTHENTICATION & INITIALIZATION ---
+// --- AUTHENTICATION & ROLE CHECK ---
 onAuthStateChanged(auth, async (user) => {
-  // Check 1: Did they pick a course?
-  if (!activeCourseId) {
-    alert("Please select a course from your dashboard first!");
-    window.location.href = 'teacher-portal.html';
-    return; // Stop the script
-  }
-
-  // Check 2: Are they logged in and connected to a school?
   if (user && activeSchoolId) {
     try {
       const userProfileRef = doc(db, `schools/${activeSchoolId}/users`, user.uid);
       const userProfileSnap = await getDoc(userProfileRef);
 
       if (userProfileSnap.exists() && userProfileSnap.data().role === 'teacher') {
-        currentTeacherId = user.uid;
+        const userData = userProfileSnap.data();
+        
+        // Populate Header
+        welcomeMsgEl.innerText = `Welcome, ${userData.firstName} ${userData.lastName}`;
+        teacherEmailEl.innerText = userData.email;
+        avatarEl.innerText = userData.firstName.charAt(0); // First initial
+        schoolNameEl.innerText = `Connected to School ID: ${activeSchoolId}`;
+        
         loadSchoolBranding();
-        loadCourseDetails();
-        loadStudentRoster();
+        loadMyCourses(user.uid);
       } else {
         alert("Security Violation: Teacher access required.");
         window.location.href = 'login.html';
       }
     } catch (error) {
-      console.error("Auth Error:", error);
+      console.error("Auth error:", error);
       window.location.href = 'login.html';
     }
   } else {
-    // Lost session
     window.location.href = 'login.html';
   }
 });

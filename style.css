@@ -1,3 +1,8 @@
+:root {
+  --primary-color: var(--primary-color);
+  --primary-hover: var(--primary-hover);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -31,7 +36,7 @@ body {
 .setup-header h2 {
   font-size: 24px;
   font-weight: 600;
-  color: #1a73e8; /* A familiar, trustworthy blue */
+  color: var(--primary-color); /* A familiar, trustworthy blue */
   margin-bottom: 8px;
 }
 
@@ -63,14 +68,14 @@ body {
 
 .input-group input:focus, .input-group select:focus {
   outline: none;
-  border-color: #1a73e8;
+  border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
 }
 
 .btn-primary {
   width: 100%;
   padding: 12px;
-  background-color: #1a73e8;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   border-radius: 6px;
@@ -81,7 +86,7 @@ body {
 }
 
 .btn-primary:hover {
-  background-color: #1557b0;
+  background-color: var(--primary-hover);
 }
 
 .hidden {
@@ -90,7 +95,7 @@ body {
 
 #loading-spinner {
   text-align: center;
-  color: #1a73e8;
+  color: var(--primary-color);
   font-weight: 500;
   margin-top: 20px;
 }

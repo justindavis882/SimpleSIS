@@ -88,7 +88,7 @@ function loadMyCourses(teacherUid) {
       // Make the whole card clickable for future features (like taking attendance)
       card.addEventListener('click', () => {
         // We will pass the courseId in the URL when we build the next page!
-        // window.location.href = `take-attendance.html?course=${courseId}`;
+        window.location.href = `take-attendance.html?course=${courseId}`;
         console.log("Clicked course:", courseId);
       });
 

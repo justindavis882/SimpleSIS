@@ -25,12 +25,35 @@ const adminEmailEl = document.getElementById('display-admin-email');
 const logoutBtn = document.getElementById('logout-btn');
 
 // 1. Listen for Authentication State
+// 1. Listen for Authentication State & Enforce RBAC
 onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    adminEmailEl.innerText = user.email;
-    loadSchoolData();
+  const activeSchoolId = localStorage.getItem('activeSchoolId');
+
+  if (user && activeSchoolId) {
+    try {
+      // Security Check: Verify Role
+      const userProfileRef = doc(db, `schools/${activeSchoolId}/users`, user.uid);
+      const userProfileSnap = await getDoc(userProfileRef);
+
+      if (userProfileSnap.exists() && userProfileSnap.data().role === 'admin') {
+        const userData = userProfileSnap.data();
+        
+        // Populate header with their actual name and role
+        adminEmailEl.innerText = `${userData.firstName} ${userData.lastName} (Admin)`;
+        
+        // Access Granted: Load the data
+        loadSchoolData();
+      } else {
+        // Access Denied: They are logged in, but not an admin
+        alert("Access Denied: Administrator privileges required.");
+        window.location.href = 'login.html';
+      }
+    } catch (error) {
+      console.error("Authorization check failed:", error);
+      window.location.href = 'login.html';
+    }
   } else {
-    // Kick them to the login page so they understand they need to authenticate
+    // Not logged in or missing school context
     window.location.href = 'login.html';
   }
 });

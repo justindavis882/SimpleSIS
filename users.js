@@ -37,11 +37,27 @@ const submitBtn = document.getElementById('submit-user-btn');
 
 let activeSchoolId = localStorage.getItem('activeSchoolId');
 
-// --- AUTHENTICATION CHECK ---
+// --- AUTHENTICATION & ROLE CHECK ---
 onAuthStateChanged(auth, async (user) => {
   if (user && activeSchoolId) {
-    schoolNameEl.innerText = `Managing School ID: ${activeSchoolId}`;
-    loadUsers();
+    try {
+      // Security Check: Verify Role
+      const userProfileRef = doc(db, `schools/${activeSchoolId}/users`, user.uid);
+      const userProfileSnap = await getDoc(userProfileRef);
+
+      if (userProfileSnap.exists() && userProfileSnap.data().role === 'admin') {
+        // Access Granted
+        schoolNameEl.innerText = `Managing School ID: ${activeSchoolId}`;
+        loadUsers();
+      } else {
+        // Access Denied
+        alert("Security Violation: Admins only.");
+        window.location.href = 'login.html';
+      }
+    } catch (error) {
+      console.error("Auth error:", error);
+      window.location.href = 'login.html';
+    }
   } else {
     window.location.href = 'login.html';
   }

@@ -1,4 +1,4 @@
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyCLkAIMy7R5UEoirN4CaVWuKJbCxzyQBVI",
   authDomain: "simplesis-f3606.firebaseapp.com",
   projectId: "simplesis-f3606",

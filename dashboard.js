@@ -24,7 +24,8 @@ const statusEl = document.getElementById('display-status');
 const adminEmailEl = document.getElementById('display-admin-email');
 const logoutBtn = document.getElementById('logout-btn');
 
-// 1. Listen for Authentication State
+let activeSchoolId = localStorage.getItem('activeSchoolId');
+
 // 1. Listen for Authentication State & Enforce RBAC
 onAuthStateChanged(auth, async (user) => {
   const activeSchoolId = localStorage.getItem('activeSchoolId');

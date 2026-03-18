@@ -91,7 +91,7 @@ function loadMyCourses(teacherUid) {
   // STREAM 2: Listen for the Teacher's Assigned Courses
   const courseQ = query(
     collection(db, `schools/${activeSchoolId}/courses`),
-    where("teacherId", "==", teacherUid),
+    where("teacherIds", "array-contains", teacherUid),
     where("isActive", "==", true)
   );
 

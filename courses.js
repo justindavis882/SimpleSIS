@@ -167,13 +167,32 @@ document.getElementById('open-course-modal-btn').addEventListener('click', () =>
 document.getElementById('close-modal-btn').addEventListener('click', closeModal);
 document.getElementById('cancel-btn').addEventListener('click', closeModal);
 
+// --- LOAD CUSTOM BRANDING ---
 async function loadSchoolBranding() {
   try {
-    const s = await getDoc(doc(db, "schools", activeSchoolId));
-    if (s.exists() && s.data().branding?.primaryColor) {
-      document.documentElement.style.setProperty('--primary-color', s.data().branding.primaryColor);
+    const schoolRef = doc(db, "schools", activeSchoolId);
+    const schoolSnap = await getDoc(schoolRef);
+    
+    if (schoolSnap.exists() && schoolSnap.data().branding) {
+      const branding = schoolSnap.data().branding;
+      
+      // 1. Set Primary Color
+      if (branding.primaryColor) {
+        document.documentElement.style.setProperty('--primary-color', branding.primaryColor);
+        const brandText = document.querySelector('.sidebar .brand h2');
+        if (brandText) brandText.style.color = branding.primaryColor;
+      }
+
+      // 2. Set Sidebar Logo
+      const logoEl = document.getElementById('sidebar-logo');
+      if (logoEl && branding.logoUrl) {
+        logoEl.src = branding.logoUrl;
+        logoEl.classList.remove('hidden'); // Reveal the image tag!
+      }
     }
-  } catch (e) {}
+  } catch (error) {
+    console.error("Error loading branding:", error);
+  }
 }
 
 logoutBtn.addEventListener('click', () => { signOut(auth).then(() => { localStorage.removeItem('activeSchoolId'); }); });

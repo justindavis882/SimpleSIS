@@ -1,8 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, getDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, getDocs, collection, query, where, addDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-// Initialize Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCLkAIMy7R5UEoirN4CaVWuKJbCxzyQBVI",
   authDomain: "simplesis-f3606.firebaseapp.com",
@@ -17,237 +16,164 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // DOM Elements
-const schoolNameEl = document.getElementById('display-school-name');
-const logoutBtn = document.getElementById('logout-btn');
 const tbody = document.getElementById('courses-tbody');
-
-// Modal Elements
 const modal = document.getElementById('course-modal');
-const openModalBtn = document.getElementById('open-create-modal-btn');
-const closeBtn = document.getElementById('close-modal-btn');
-const cancelBtn = document.getElementById('cancel-btn');
 const form = document.getElementById('course-form');
-const submitBtn = document.getElementById('submit-course-btn');
 const teacherSelect = document.getElementById('course-teacher');
+const logoutBtn = document.getElementById('logout-btn');
 
 let activeSchoolId = localStorage.getItem('activeSchoolId');
+let coursesCache = {};
+let teachersCache = {};
 
-// --- AUTHENTICATION & ROLE CHECK ---
-// --- DIAGNOSTIC AUTHENTICATION & ROLE CHECK ---
+// --- AUTHENTICATION ---
 onAuthStateChanged(auth, async (user) => {
-  // 1. Grab the ID inside the function just to be safe
-  const activeSchoolId = localStorage.getItem('activeSchoolId');
-
-  // 2. Check if Firebase lost the user
-  if (!user) {
-    alert("DEBUG: Firebase says no user is logged in. Session was lost!");
-    window.location.href = 'login.html';
-    return;
-  }
-
-  // 3. Check if LocalStorage lost the School ID
-  if (!activeSchoolId) {
-    alert("DEBUG: The activeSchoolId is missing from your browser memory.");
-    window.location.href = 'login.html';
-    return;
-  }
-
-  // 4. Try to read the database profile
-  try {
-    const userProfileRef = doc(db, `schools/${activeSchoolId}/users`, user.uid);
-    const userProfileSnap = await getDoc(userProfileRef);
-
-    if (userProfileSnap.exists() && userProfileSnap.data().role === 'admin') {
+  if (user && activeSchoolId) {
+    const userSnap = await getDoc(doc(db, `schools/${activeSchoolId}/users`, user.uid));
+    if (userSnap.exists() && userSnap.data().role === 'admin') {
       loadSchoolBranding();
-      
-      // SUCCESS! Load the appropriate page data
-      if (document.getElementById('display-school-name')) {
-        document.getElementById('display-school-name').innerText = `Managing School ID: ${activeSchoolId}`;
-      }
-      
-      // Run the specific page functions if they exist
-      if (typeof loadUsers === 'function') loadUsers();
-      if (typeof populateTeacherDropdown === 'function') populateTeacherDropdown();
-      if (typeof loadCourses === 'function') loadCourses();
-
-    } else {
-      // They exist, but aren't an admin
-      const roleFound = userProfileSnap.exists() ? userProfileSnap.data().role : "No Profile Document Found";
-      alert(`DEBUG: Access Denied. Your role is listed as: ${roleFound}`);
-      window.location.href = 'login.html';
-    }
-  } catch (error) {
-    // A database rule blocked the read!
-    alert(`DEBUG: Firestore Error! Check your browser's console (F12). Error: ${error.message}`);
-    console.error("Diagnostic Auth Error:", error);
-  }
+      await fetchTeachers();
+      listenToCourses();
+    } else { window.location.href = 'login.html'; }
+  } else { window.location.href = 'login.html'; }
 });
 
-// --- POPULATE INSTRUCTORS ---
-// Query the users subcollection for anyone with the role 'teacher'
-async function populateTeacherDropdown() {
-  try {
-    const q = query(
-      collection(db, `schools/${activeSchoolId}/users`), 
-      where("role", "==", "teacher"),
-      where("isActive", "==", true)
-    );
-    
-    const querySnapshot = await getDocs(q);
-    teacherSelect.innerHTML = '<option value="" disabled selected>Select an instructor</option>';
-    
-    querySnapshot.forEach((doc) => {
-      const teacher = doc.data();
-      const option = document.createElement('option');
-      // Store the UID as the value, display the name
-      option.value = doc.id; 
-      option.text = `${teacher.lastName}, ${teacher.firstName}`;
-      teacherSelect.appendChild(option);
-    });
-  } catch (error) {
-    console.error("Error loading teachers:", error);
-    teacherSelect.innerHTML = '<option value="" disabled>Error loading teachers</option>';
-  }
+// --- FETCH DATA ---
+async function fetchTeachers() {
+  const q = query(collection(db, `schools/${activeSchoolId}/users`), where("role", "==", "teacher"));
+  const snaps = await getDocs(q);
+  teacherSelect.innerHTML = '';
+  snaps.forEach(d => {
+    teachersCache[d.id] = d.data();
+    teacherSelect.innerHTML += `<option value="${d.id}">${d.data().lastName}, ${d.data().firstName}</option>`;
+  });
 }
 
-// --- LOAD COURSES (REAL-TIME) ---
-function loadCourses() {
-  const coursesRef = collection(db, `schools/${activeSchoolId}/courses`);
-  
-  onSnapshot(coursesRef, async (snapshot) => {
-    tbody.innerHTML = ''; 
-    
-    for (const docSnap of snapshot.docs) {
-      const data = docSnap.data();
-      const courseId = docSnap.id;
-      const isActive = data.isActive;
+function listenToCourses() {
+  onSnapshot(collection(db, `schools/${activeSchoolId}/courses`), (snapshot) => {
+    tbody.innerHTML = '';
+    coursesCache = {};
 
-      // Fetch the teacher's name dynamically using the stored teacherId
-      let teacherName = "Unassigned";
-      if (data.teacherId) {
-          try {
-              const teacherDoc = await getDoc(doc(db, `schools/${activeSchoolId}/users`, data.teacherId));
-              if (teacherDoc.exists()) {
-                  teacherName = `${teacherDoc.data().lastName}, ${teacherDoc.data().firstName}`;
-              }
-          } catch(e) { console.error(e); }
-      }
+    if (snapshot.empty) return tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No courses created yet.</td></tr>';
+
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      coursesCache[docSnap.id] = data;
+
+      // Formatting for the table
+      const typeBadge = data.courseType === 'Required' ? 'badge-req' : (data.courseType === 'Elective' ? 'badge-ele' : 'badge-aft');
+      const daysStr = (data.daysMet || []).join(', ');
+      
+      // Format Time (12hr format)
+      const formatTime = (time24) => {
+        if(!time24) return "";
+        let [h, m] = time24.split(':');
+        let ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${h}:${m} ${ampm}`;
+      };
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><strong>${data.courseCode}</strong></td>
-        <td>${data.courseName}</td>
-        <td>${teacherName}</td>
-        <td>${data.term}</td>
-        <td><span class="status-badge status-${isActive}">${isActive ? 'Active' : 'Archived'}</span></td>
-        <td>
-          <button class="btn-secondary toggle-status-btn" style="width:auto;" data-id="${courseId}" data-active="${isActive}">Toggle Status</button>
-          <button class="btn-danger delete-btn" data-id="${courseId}">Delete</button>
+        <td><strong>${data.courseCode}</strong><br><span style="color:#64748b; font-size:13px;">${data.courseName}</span></td>
+        <td><span class="badge ${typeBadge}">${data.courseType || 'Required'}</span><br><span style="color:#64748b; font-size:13px;">Room: ${data.roomNumber || 'TBD'}</span></td>
+        <td><span style="font-weight: 500;">${daysStr || 'TBD'}</span><br><span style="color:#64748b; font-size:13px;">${formatTime(data.startTime)} - ${formatTime(data.endTime)}</span></td>
+        <td>${data.isActive ? '🟢 Active' : '🔴 Inactive'}</td>
+        <td style="text-align: right;">
+          <button class="btn-secondary edit-btn" data-id="${docSnap.id}">Edit</button>
         </td>
       `;
       tbody.appendChild(tr);
-    }
-
-    attachTableListeners();
+    });
   });
 }
 
-// --- CREATE NEW COURSE ---
+// --- FORM HANDLING (CRUD) ---
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
-  submitBtn.innerText = "Saving...";
-  submitBtn.disabled = true;
+  
+  // Extract Arrays
+  const selectedTeachers = Array.from(teacherSelect.selectedOptions).map(opt => opt.value);
+  const selectedDays = Array.from(document.querySelectorAll('.day-chk:checked')).map(chk => chk.value);
 
-  const code = document.getElementById('course-code').value.trim().toUpperCase();
-  const name = document.getElementById('course-name').value.trim();
-  const term = document.getElementById('course-term').value;
-  const teacherId = teacherSelect.value;
+  const payload = {
+    courseCode: document.getElementById('course-code').value.trim(),
+    courseName: document.getElementById('course-name').value.trim(),
+    courseType: document.getElementById('course-type').value,
+    roomNumber: document.getElementById('course-room').value.trim(),
+    startDate: document.getElementById('start-date').value,
+    endDate: document.getElementById('end-date').value,
+    startTime: document.getElementById('start-time').value,
+    endTime: document.getElementById('end-time').value,
+    daysMet: selectedDays,
+    teacherIds: selectedTeachers, // Notice the new 's' (Array)
+    isActive: document.getElementById('course-active').checked
+  };
 
+  const editId = document.getElementById('edit-course-id').value;
   try {
-    // Generate a random ID or use the code (using standard addDoc/auto-ID is safer to prevent code collisions)
-    const newCourseRef = doc(collection(db, `schools/${activeSchoolId}/courses`));
+    if (editId) {
+      await updateDoc(doc(db, `schools/${activeSchoolId}/courses`, editId), payload);
+    } else {
+      payload.enrolledStudents = [];
+      await addDoc(collection(db, `schools/${activeSchoolId}/courses`), payload);
+    }
+    closeModal();
+  } catch (err) { console.error(err); alert("Failed to save course."); }
+});
+
+// Event Delegation for Edit Buttons
+tbody.addEventListener('click', (e) => {
+  if (e.target.classList.contains('edit-btn')) {
+    const id = e.target.getAttribute('data-id');
+    const data = coursesCache[id];
     
-    await setDoc(newCourseRef, {
-      courseCode: code,
-      courseName: name,
-      term: term,
-      teacherId: teacherId, // Storing relational data!
-      isActive: true,
-      createdAt: new Date()
+    document.getElementById('modal-title').innerText = "Edit Course";
+    document.getElementById('edit-course-id').value = id;
+    document.getElementById('course-code').value = data.courseCode;
+    document.getElementById('course-name').value = data.courseName;
+    document.getElementById('course-type').value = data.courseType || "Required";
+    document.getElementById('course-room').value = data.roomNumber || "";
+    document.getElementById('start-date').value = data.startDate || "";
+    document.getElementById('end-date').value = data.endDate || "";
+    document.getElementById('start-time').value = data.startTime || "";
+    document.getElementById('end-time').value = data.endTime || "";
+    document.getElementById('course-active').checked = data.isActive !== false;
+
+    // Repopulate Checkboxes
+    document.querySelectorAll('.day-chk').forEach(chk => {
+      chk.checked = (data.daysMet || []).includes(chk.value);
     });
 
-    closeModal();
-    form.reset();
-  } catch (error) {
-    console.error("Error creating course:", error);
-    alert(`Failed to create course: ${error.message}`);
-  } finally {
-    submitBtn.innerText = "Save Course";
-    submitBtn.disabled = false;
+    // Repopulate Multi-Select Dropdown
+    Array.from(teacherSelect.options).forEach(opt => {
+      opt.selected = (data.teacherIds || []).includes(opt.value);
+      // Fallback for older data that used the string 'teacherId'
+      if (data.teacherId && !data.teacherIds && data.teacherId === opt.value) opt.selected = true; 
+    });
+
+    modal.classList.remove('hidden');
   }
 });
 
-// --- UPDATE & DELETE ---
-function attachTableListeners() {
-  document.querySelectorAll('.toggle-status-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const id = e.target.getAttribute('data-id');
-      const currentStatus = e.target.getAttribute('data-active') === 'true'; 
-
-      try {
-        await updateDoc(doc(db, `schools/${activeSchoolId}/courses`, id), { 
-          isActive: !currentStatus 
-        });
-      } catch (error) { console.error(error); }
-    });
-  });
-
-  document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const id = e.target.getAttribute('data-id');
-      if (confirm(`Delete this course? This cannot be undone and may orphan student grades.`)) {
-        try {
-          await deleteDoc(doc(db, `schools/${activeSchoolId}/courses`, id));
-        } catch (error) { console.error(error); }
-      }
-    });
-  });
+function closeModal() {
+  modal.classList.add('hidden');
+  form.reset();
+  document.getElementById('edit-course-id').value = "";
+  document.getElementById('modal-title').innerText = "Create New Course";
 }
 
-// --- MODAL & LOGOUT HANDLERS ---
-function openModal() { modal.classList.remove('hidden'); }
-function closeModal() { modal.classList.add('hidden'); }
+document.getElementById('open-course-modal-btn').addEventListener('click', () => modal.classList.remove('hidden'));
+document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+document.getElementById('cancel-btn').addEventListener('click', closeModal);
 
-openModalBtn.addEventListener('click', openModal);
-closeBtn.addEventListener('click', closeModal);
-cancelBtn.addEventListener('click', closeModal);
-
-logoutBtn.addEventListener('click', () => {
-  signOut(auth).then(() => {
-    localStorage.removeItem('activeSchoolId');
-  });
-});
-
-// --- LOAD CUSTOM BRANDING ---
 async function loadSchoolBranding() {
   try {
-    // Note: ensure 'doc' and 'getDoc' are imported from firestore at the top of your file!
-    const schoolRef = doc(db, "schools", activeSchoolId);
-    const schoolSnap = await getDoc(schoolRef);
-    
-    if (schoolSnap.exists() && schoolSnap.data().branding) {
-      const branding = schoolSnap.data().branding;
-      
-      if (branding.primaryColor) {
-        // 1. Override the CSS variables globally on the page
-        document.documentElement.style.setProperty('--primary-color', branding.primaryColor);
-        
-        // 2. Directly target the sidebar text as a fallback
-        const brandText = document.querySelector('.sidebar .brand h2');
-        if (brandText) brandText.style.color = branding.primaryColor;
-      }
+    const s = await getDoc(doc(db, "schools", activeSchoolId));
+    if (s.exists() && s.data().branding?.primaryColor) {
+      document.documentElement.style.setProperty('--primary-color', s.data().branding.primaryColor);
     }
-  } catch (error) {
-    console.error("Error loading branding:", error);
-  }
+  } catch (e) {}
 }
+
+logoutBtn.addEventListener('click', () => { signOut(auth).then(() => { localStorage.removeItem('activeSchoolId'); }); });

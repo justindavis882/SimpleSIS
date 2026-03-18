@@ -21,23 +21,25 @@ let coursesCache = {};
 let teachersCache = {};
 
 // --- AUTHENTICATION ---
+// --- AUTHENTICATION ---
 onAuthStateChanged(auth, async (user) => {
   if (user && activeSchoolId) {
-    const userSnap = await getDoc(doc(db, `schools/${activeSchoolId}/users`, user.uid));
-    if (userSnap.exists() && userSnap.data().role === 'admin') {
-      loadSchoolBranding();
-      await fetchTeachers();
-      listenToCourses();
-      hideGlobalLoader(); 
-        
-      } else {
-        window.location.href = 'login.html';
+    try {
+      const userSnap = await getDoc(doc(db, `schools/${activeSchoolId}/users`, user.uid));
+      if (userSnap.exists() && userSnap.data().role === 'admin') {
+        loadSchoolBranding();
+        await fetchTeachers();
+        listenToCourses();
+        hideGlobalLoader(); // Dismisses the loading screen once data is ready!
+      } else { 
+        window.location.href = 'login.html'; 
       }
     } catch (error) {
+      console.error("Auth check failed:", error);
       window.location.href = 'login.html';
     }
-  } else {
-    window.location.href = 'login.html';
+  } else { 
+    window.location.href = 'login.html'; 
   }
 });
 

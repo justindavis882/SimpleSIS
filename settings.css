@@ -4,6 +4,28 @@
   --primary-hover: #1557b0;
 }
 
+/* Hide the layout initially */
+.dashboard-layout {
+  opacity: 0;
+  transition: opacity 0.4s ease-in-out;
+}
+
+.dashboard-layout.visible {
+  opacity: 1;
+}
+
+/* Optional: A global loading spinner centered on the screen */
+#global-loader {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+  color: var(--primary-color);
+  font-weight: 500;
+  z-index: 9999;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 body { background-color: #f0f2f5; color: #333; }
 

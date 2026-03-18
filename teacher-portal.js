@@ -24,34 +24,29 @@ const infoTitle = document.getElementById('info-modal-title');
 
 let activeSchoolId = localStorage.getItem('activeSchoolId');
 
-// --- AUTHENTICATION & ROLE CHECK ---
+// --- AUTHENTICATION ---
 onAuthStateChanged(auth, async (user) => {
+  if (!activeCourseId) return window.location.href = 'teacher-portal.html';
+
   if (user && activeSchoolId) {
     try {
-      const userProfileRef = doc(db, `schools/${activeSchoolId}/users`, user.uid);
-      const userProfileSnap = await getDoc(userProfileRef);
-
+      const userProfileSnap = await getDoc(doc(db, `schools/${activeSchoolId}/users`, user.uid));
       if (userProfileSnap.exists() && userProfileSnap.data().role === 'teacher') {
-        const userData = userProfileSnap.data();
-        
-        // Populate Header
-        welcomeMsgEl.innerText = `Welcome, ${userData.firstName} ${userData.lastName}`;
-        teacherEmailEl.innerText = userData.email;
-        avatarEl.innerText = userData.firstName.charAt(0);
-        schoolNameEl.innerText = `Connected to School ID: ${activeSchoolId}`;
-        
+        currentTeacherId = user.uid;
         loadSchoolBranding();
-        loadMyCourses(user.uid);
-      hideGlobalLoader(); 
         
-      } else {
-        window.location.href = 'login.html';
+        // Wait for the gradebook to build, THEN hide the loader
+        await initializeGradebook(); 
+        hideGlobalLoader(); 
+        
+      } else { 
+        window.location.href = 'login.html'; 
       }
-    } catch (error) {
-      window.location.href = 'login.html';
+    } catch (e) { 
+      window.location.href = 'login.html'; 
     }
-  } else {
-    window.location.href = 'login.html';
+  } else { 
+    window.location.href = 'login.html'; 
   }
 });
 

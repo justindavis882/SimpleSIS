@@ -26,7 +26,6 @@ let activeSchoolId = localStorage.getItem('activeSchoolId');
 
 // --- AUTHENTICATION ---
 onAuthStateChanged(auth, async (user) => {
-  if (!activeCourseId) return window.location.href = 'teacher-portal.html';
 
   if (user && activeSchoolId) {
     try {

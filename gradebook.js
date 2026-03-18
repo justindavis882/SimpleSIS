@@ -2,7 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/fireba
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, getDocs, collection, query, where, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 import { hideGlobalLoader, showToast } from "./utils.js";
-
 import { firebaseConfig } from "./config.js";
 
 const app = initializeApp(firebaseConfig);
@@ -44,17 +43,19 @@ onAuthStateChanged(auth, async (user) => {
       if (userProfileSnap.exists() && userProfileSnap.data().role === 'teacher') {
         currentTeacherId = user.uid;
         loadSchoolBranding();
-        initializeGradebook(); 
+        
+        // Wait for the gradebook to build, THEN hide the loader
+        await initializeGradebook(); 
         hideGlobalLoader(); 
         
-      } else {
-        window.location.href = 'login.html';
+      } else { 
+        window.location.href = 'login.html'; 
       }
-    } catch (error) {
-      window.location.href = 'login.html';
+    } catch (e) { 
+      window.location.href = 'login.html'; 
     }
-  } else {
-    window.location.href = 'login.html';
+  } else { 
+    window.location.href = 'login.html'; 
   }
 });
 

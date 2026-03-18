@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { hideGlobalLoader, showToast } from "./utils.js";
 
 import { firebaseConfig } from "./config.js";
 
@@ -36,17 +37,15 @@ onAuthStateChanged(auth, async (user) => {
         
         // Access Granted: Load the data
         loadSchoolData();
+        hideGlobalLoader(); 
+        
       } else {
-        // Access Denied: They are logged in, but not an admin
-        alert("Access Denied: Administrator privileges required.");
         window.location.href = 'login.html';
       }
     } catch (error) {
-      console.error("Authorization check failed:", error);
       window.location.href = 'login.html';
     }
   } else {
-    // Not logged in or missing school context
     window.location.href = 'login.html';
   }
 });

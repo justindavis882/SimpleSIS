@@ -73,6 +73,7 @@ function buildNavigation(role) {
       <a href="courses.html">Courses & Pacing</a>
       <a href="enrollment.html">Enrollment</a>
       <a href="attendance.html">Live Attendance</a>
+      <a href="reports.html">Reports</a>
       <a href="settings.html">Settings</a>
       <a href="profile.html" class="active">My Profile</a>
     `;

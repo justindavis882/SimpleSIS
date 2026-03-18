@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, collection, doc, getDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { hideGlobalLoader, showToast } from "./utils.js";
 
 import { firebaseConfig } from "./config.js";
 
@@ -43,12 +44,12 @@ onAuthStateChanged(auth, async (user) => {
         
         await buildCaches();
         fetchAttendance(today);
+        hideGlobalLoader(); 
+        
       } else {
-        alert("Security Violation: Admins only.");
         window.location.href = 'login.html';
       }
     } catch (error) {
-      console.error("Auth error:", error);
       window.location.href = 'login.html';
     }
   } else {

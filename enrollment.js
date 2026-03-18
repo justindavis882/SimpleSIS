@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { hideGlobalLoader, showToast } from "./utils.js";
 
 import { firebaseConfig } from "./config.js";
 
@@ -33,10 +34,14 @@ onAuthStateChanged(auth, async (user) => {
         schoolNameEl.innerText = `Managing School ID: ${activeSchoolId}`;
         loadSchoolBranding();
         await fetchBaseData();
+        hideGlobalLoader(); 
+        
       } else {
         window.location.href = 'login.html';
       }
-    } catch (error) { console.error(error); }
+    } catch (error) {
+      window.location.href = 'login.html';
+    }
   } else {
     window.location.href = 'login.html';
   }

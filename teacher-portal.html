@@ -14,9 +14,9 @@
         <h2 id="sidebar-brand-name">SimpleSIS</h2>
       </div>
       <nav>
-        <a href="teacher-portal.html">My Dashboard</a>
+        <a href="teacher-portal.html" class="active">My Dashboard</a>
         <a href="teacher-portal.html">Take Attendance</a>
-        <a href="gradebook.html">Gradebook</a>
+        <a href="teacher-portal.html">Gradebook</a>
         <a href="reports.html">Reports</a>
         <a href="profile.html">My Profile</a>
       </nav>
@@ -45,6 +45,20 @@
         <p style="color: #64748b;">Loading your assigned courses...</p>
       </section>
     </main>
+  </div>
+
+  <div id="course-info-modal" class="modal hidden">
+    <div class="modal-content" style="width: 450px;">
+      <div class="modal-header">
+        <h2 id="info-modal-title">Course Information</h2>
+        <button id="close-info-modal-btn" class="close-btn">&times;</button>
+      </div>
+      <div id="course-info-content" style="line-height: 1.6; color: #475569;">
+        </div>
+      <div class="modal-actions" style="margin-top: 24px;">
+        <button type="button" id="close-info-btn" class="btn-secondary" style="width: 100%;">Close</button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="teacher-portal.js"></script>

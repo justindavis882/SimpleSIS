@@ -155,56 +155,93 @@ async function loadDashboardStats() {
   }
 }
 
-// --- LOAD RECENT ACTIVITY ---
+// --- LOAD RECENT ACTIVITY (EXPANDED) ---
 async function loadRecentActivity() {
   const activeSchoolId = localStorage.getItem('activeSchoolId');
   if (!activeSchoolId) return;
 
   try {
-    // Grab the 4 most recently created users
-    const activityQ = query(
-      collection(db, `schools/${activeSchoolId}/users`), 
-      orderBy("createdAt", "desc"), 
-      limit(4)
-    );
-    const activitySnap = await getDocs(activityQ);
-    
-    activityContainer.innerHTML = ''; // Clear the "Loading..." text
+    // 1. Run all three queries simultaneously for maximum speed
+    const [userSnap, gradeSnap, attSnap] = await Promise.all([
+      getDocs(query(collection(db, `schools/${activeSchoolId}/users`), orderBy("createdAt", "desc"), limit(3))),
+      getDocs(query(collection(db, `schools/${activeSchoolId}/grades`), orderBy("timestamp", "desc"), limit(3))),
+      getDocs(query(collection(db, `schools/${activeSchoolId}/attendance`), orderBy("timestamp", "desc"), limit(3)))
+    ]);
 
-    if (activitySnap.empty) {
-      activityContainer.innerHTML = '<p style="color: #64748b;">No recent activity logged.</p>';
+    let activities = [];
+
+    // 2. Parse Users Data
+    userSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      // Handle standard dates or Firebase Timestamps safely
+      const time = data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt)) : new Date(0);
+      const roleColor = data.role === 'admin' ? '#d93025' : (data.role === 'teacher' ? '#f59e0b' : '#1a73e8');
+      
+      activities.push({
+        time: time,
+        text: `<strong style="color: ${roleColor};">New ${data.role} account:</strong> ${data.firstName} ${data.lastName}`,
+        icon: '👤'
+      });
+    });
+
+    // 3. Parse Grades Data
+    gradeSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      const time = data.timestamp ? data.timestamp.toDate() : new Date(0);
+      
+      activities.push({
+        time: time,
+        text: `<strong style="color: #0f9d58;">Grade Updated:</strong> A score was logged in course ${data.courseId}`,
+        icon: '📝'
+      });
+    });
+
+    // 4. Parse Attendance Data
+    attSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      const time = data.timestamp ? data.timestamp.toDate() : new Date(0);
+      
+      activities.push({
+        time: time,
+        text: `<strong style="color: #8b5cf6;">Attendance Logged:</strong> A record was submitted for course ${data.courseId}`,
+        icon: '📅'
+      });
+    });
+
+    // 5. Sort everything together by newest first
+    activities.sort((a, b) => b.time - a.time);
+
+    // 6. Take the top 5 overall
+    const topActivities = activities.slice(0, 5);
+
+    activityContainer.innerHTML = ''; // Clear loading text
+
+    if (topActivities.length === 0) {
+      activityContainer.innerHTML = '<p style="color: #64748b;">No recent system activity logged.</p>';
       return;
     }
 
-    activitySnap.forEach(docSnap => {
-      const data = docSnap.data();
+    // 7. Render to the DOM with polished formatting
+    topActivities.forEach(item => {
+      // Format the date string cleanly
+      const dateStr = item.time.getTime() === 0 ? "Recently" : 
+        (item.time.toLocaleDateString() + ' at ' + item.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
       
-      // Format the timestamp nicely
-      let dateStr = "Recently";
-      if (data.createdAt) {
-        // Handle both Firebase Timestamps and standard JS Dates
-        const dateObj = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-        dateStr = dateObj.toLocaleDateString() + ' at ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-      }
-
-      // Customize text based on role
-      const actionText = data.role === 'student' ? 'New student enrolled:' : 'New staff account created:';
-      const roleColor = data.role === 'admin' ? '#d93025' : (data.role === 'teacher' ? '#f59e0b' : '#1a73e8');
-
-      // Build the feed card
       activityContainer.innerHTML += `
-        <div class="feed-card" style="margin-bottom: 12px;">
-          <p>
-            <strong style="color: ${roleColor};">${actionText}</strong> 
-            ${data.firstName} ${data.lastName}
-          </p>
-          <span class="timestamp">${dateStr}</span>
+        <div class="feed-card" style="margin-bottom: 12px; display: flex; gap: 16px; align-items: flex-start; padding: 16px;">
+          <div style="font-size: 20px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center;">
+            ${item.icon}
+          </div>
+          <div style="flex-grow: 1;">
+            <p style="margin-bottom: 6px; font-size: 14px; color: #0f172a; line-height: 1.4;">${item.text}</p>
+            <span class="timestamp" style="font-size: 12px; color: #64748b; font-weight: 500;">${dateStr}</span>
+          </div>
         </div>
       `;
     });
 
   } catch (error) {
-    console.error("Error loading activity:", error);
-    activityContainer.innerHTML = '<p style="color: #d93025;">Failed to load activity feed. Check console.</p>';
+    console.error("Error loading combined activity:", error);
+    activityContainer.innerHTML = '<p style="color: #d93025;">Failed to load activity feed. Ensure indices are built if required.</p>';
   }
 }

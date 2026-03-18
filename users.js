@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { hideGlobalLoader, showToast } from "./utils.js";
 
 import { firebaseConfig } from "./config.js";
 
@@ -60,6 +61,7 @@ onAuthStateChanged(auth, async (user) => {
         document.getElementById('display-school-name').innerText = `Managing School ID: ${activeSchoolId}`;
 
         loadSchoolBranding();
+        hideGlobalLoader();
       }
       
       // Run the specific page functions if they exist

@@ -131,7 +131,7 @@ templatesTbody.addEventListener('click', async (e) => {
     if (template.target === 'course') {
       document.getElementById('run-target-label').innerText = "Select Course";
       const q = currentUserRole === 'teacher' 
-        ? query(collection(db, `schools/${activeSchoolId}/courses`), where("teacherId", "==", currentTeacherId)) 
+        ? query(collection(db, `schools/${activeSchoolId}/courses`), where("teacherIds", "array-contains", currentTeacherId)) 
         : collection(db, `schools/${activeSchoolId}/courses`);
       
       const snaps = await getDocs(q);

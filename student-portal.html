@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Portal | SimpleSIS</title>
+  <link rel="stylesheet" href="teacher-portal.css">
+  <style>
+    .student-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
+      gap: 24px; 
+      align-items: start; 
+    }
+    .dashboard-card { 
+      background: white; 
+      padding: 24px; 
+      border-radius: 12px; 
+      border: 1px solid #eaebed; 
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05); 
+    }
+    .dashboard-card h2 { 
+      font-size: 18px; 
+      color: #0f172a; 
+      margin-bottom: 16px; 
+      padding-bottom: 12px; 
+      border-bottom: 1px solid #e2e8f0; 
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .schedule-item { 
+      padding: 12px 0; 
+      border-bottom: 1px solid #f1f5f9; 
+    }
+    .schedule-item:last-child { border-bottom: none; }
+    
+    .alert-badge { 
+      background: #fee2e2; 
+      color: #b91c1c; 
+      padding: 2px 8px; 
+      border-radius: 12px; 
+      font-size: 12px; 
+      font-weight: bold; 
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2 id="sidebar-brand-name">SimpleSIS</h2>
+      </div>
+      <nav>
+        <a href="student-portal.html" class="active">My Dashboard</a>
+        <a href="profile.html">My Profile</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn-secondary">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header" style="margin-bottom: 30px;">
+        <div>
+          <h1 id="welcome-message">Welcome, Student</h1>
+          <p id="display-school-name" class="subtitle">Loading your academic data...</p>
+        </div>
+        <div class="user-profile">
+          <span id="display-student-email">student@school.edu</span>
+          <div class="avatar" id="student-avatar">S</div>
+        </div>
+      </header>
+
+      <div class="student-grid">
+        
+        <section class="dashboard-card">
+          <h2>My Schedule</h2>
+          <div id="schedule-container">
+            <p style="color: #64748b; font-size: 14px;">Loading schedule...</p>
+          </div>
+        </section>
+
+        <section class="dashboard-card">
+          <h2>
+            Action Required 
+            <span id="missing-count" class="alert-badge hidden">0 Missing</span>
+          </h2>
+          <div id="missing-work-container">
+            <p style="color: #64748b; font-size: 14px;">Loading grades...</p>
+          </div>
+        </section>
+
+        <section class="dashboard-card">
+          <h2>Attendance Summary</h2>
+          <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+            <div style="flex: 1; background: #f8fafc; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+              <div style="font-size: 24px; font-weight: bold; color: #d93025;" id="absent-count">0</div>
+              <div style="font-size: 12px; color: #64748b; text-transform: uppercase;">Absences</div>
+            </div>
+            <div style="flex: 1; background: #f8fafc; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+              <div style="font-size: 24px; font-weight: bold; color: #f59e0b;" id="tardy-count">0</div>
+              <div style="font-size: 12px; color: #64748b; text-transform: uppercase;">Tardies</div>
+            </div>
+          </div>
+          <div id="recent-attendance-container">
+            <h3 style="font-size: 14px; color: #475569; margin-bottom: 8px;">Recent Records</h3>
+            <ul id="attendance-list" style="list-style: none; padding: 0; font-size: 13px; color: #0f172a;">
+              <li style="color: #64748b;">Loading history...</li>
+            </ul>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="student-portal.js"></script>
+</body>
+</html>

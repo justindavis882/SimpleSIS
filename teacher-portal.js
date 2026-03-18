@@ -23,6 +23,11 @@ const avatarEl = document.getElementById('teacher-avatar');
 const coursesContainer = document.getElementById('teacher-courses-container');
 const logoutBtn = document.getElementById('logout-btn');
 
+// Modal Elements
+const infoModal = document.getElementById('course-info-modal');
+const infoContent = document.getElementById('course-info-content');
+const infoTitle = document.getElementById('info-modal-title');
+
 let activeSchoolId = localStorage.getItem('activeSchoolId');
 
 // --- AUTHENTICATION & ROLE CHECK ---
@@ -38,22 +43,14 @@ onAuthStateChanged(auth, async (user) => {
         // Populate Header
         welcomeMsgEl.innerText = `Welcome, ${userData.firstName} ${userData.lastName}`;
         teacherEmailEl.innerText = userData.email;
-        avatarEl.innerText = userData.firstName.charAt(0); // First initial
+        avatarEl.innerText = userData.firstName.charAt(0);
         schoolNameEl.innerText = `Connected to School ID: ${activeSchoolId}`;
         
         loadSchoolBranding();
         loadMyCourses(user.uid);
-      } else {
-        alert("Security Violation: Teacher access required.");
-        window.location.href = 'login.html';
-      }
-    } catch (error) {
-      console.error("Auth error:", error);
-      window.location.href = 'login.html';
-    }
-  } else {
-    window.location.href = 'login.html';
-  }
+      } else { window.location.href = 'login.html'; }
+    } catch (error) { window.location.href = 'login.html'; }
+  } else { window.location.href = 'login.html'; }
 });
 
 // --- DATA STREAMS: COURSES & ATTENDANCE ---
@@ -63,45 +60,28 @@ let attendanceTimes = {};
 function loadMyCourses(teacherUid) {
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // STREAM 1: Listen for Today's Attendance records
-  const attQ = query(
-    collection(db, `schools/${activeSchoolId}/attendance`),
-    where("teacherId", "==", teacherUid),
-    where("dateString", "==", todayStr)
-  );
-
+  // STREAM 1: Daily Attendance
+  const attQ = query(collection(db, `schools/${activeSchoolId}/attendance`), where("teacherId", "==", teacherUid), where("dateString", "==", todayStr));
   onSnapshot(attQ, (snapshot) => {
-    attendanceTimes = {}; // Reset the daily cache
-    
+    attendanceTimes = {}; 
     snapshot.forEach(docSnap => {
       const data = docSnap.data();
-      // Only grab the timestamp if the server has fully resolved it
       if (data.timestamp && !attendanceTimes[data.courseId]) {
         attendanceTimes[data.courseId] = data.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
       } else if (!data.timestamp && !attendanceTimes[data.courseId]) {
-        // Fallback for the split-second before the server confirms the database write
         attendanceTimes[data.courseId] = "Just Now"; 
       }
     });
-    
-    // Refresh the UI if a new attendance record comes in!
     renderCourseCards(); 
   });
 
-  // STREAM 2: Listen for the Teacher's Assigned Courses
-  const courseQ = query(
-    collection(db, `schools/${activeSchoolId}/courses`),
-    where("teacherIds", "array-contains", teacherUid),
-    where("isActive", "==", true)
-  );
-
+  // STREAM 2: Assigned Courses
+  const courseQ = query(collection(db, `schools/${activeSchoolId}/courses`), where("teacherIds", "array-contains", teacherUid), where("isActive", "==", true));
   onSnapshot(courseQ, (snapshot) => {
     cachedCourses = [];
     snapshot.forEach((docSnap) => {
       cachedCourses.push({ id: docSnap.id, ...docSnap.data() });
     });
-    
-    // Refresh the UI when the courses load!
     renderCourseCards(); 
   }, (error) => {
     console.error("Error fetching courses:", error);
@@ -111,7 +91,7 @@ function loadMyCourses(teacherUid) {
 
 // --- RENDER THE CARDS ---
 function renderCourseCards() {
-  coursesContainer.innerHTML = ''; // Clear loading text
+  coursesContainer.innerHTML = ''; 
 
   if (cachedCourses.length === 0) {
     coursesContainer.innerHTML = '<p style="color: #64748b;">You have not been assigned any active courses yet.</p>';
@@ -120,8 +100,6 @@ function renderCourseCards() {
 
   cachedCourses.forEach((course) => {
     const courseId = course.id;
-    
-    // Determine the attendance badge based on our stream cache
     const isTaken = attendanceTimes[courseId];
     const attBadgeHtml = isTaken 
       ? `<span style="color: #0f9d58; font-weight: 600;">✓ Taken at ${attendanceTimes[courseId]}</span>` 
@@ -131,9 +109,11 @@ function renderCourseCards() {
     card.className = 'course-card';
     
     card.innerHTML = `
-      <span class="course-code">${course.courseCode}</span>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        <span class="course-code" style="margin-bottom: 0;">${course.courseCode}</span>
+        <button class="info-btn" data-id="${courseId}" style="background: none; border: none; cursor: pointer; font-size: 16px; transition: transform 0.2s;" title="View Course Details">ℹ️</button>
+      </div>
       <h3 class="course-name">${course.courseName}</h3>
-      <p class="course-term">${course.term}</p>
       
       <div style="margin-top: 12px; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px;">
         Daily Roll: ${attBadgeHtml}
@@ -149,29 +129,72 @@ function renderCourseCards() {
   });
 }
 
+// --- INFO MODAL LOGIC ---
+// Format Time Helper (24hr to 12hr)
+function formatTime(time24) {
+  if(!time24) return "TBD";
+  let [h, m] = time24.split(':');
+  let ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${h}:${m} ${ampm}`;
+}
+
+// Event Delegation for the Info Button
+coursesContainer.addEventListener('click', (e) => {
+  if (e.target.classList.contains('info-btn')) {
+    const courseId = e.target.getAttribute('data-id');
+    const course = cachedCourses.find(c => c.id === courseId);
+    
+    if (course) {
+      infoTitle.innerText = `${course.courseCode}: ${course.courseName}`;
+      
+      const typeBadge = course.courseType === 'Required' ? 'background: #fee2e2; color: #b91c1c;' : (course.courseType === 'Elective' ? 'background: #e0e7ff; color: #4338ca;' : 'background: #fef3c7; color: #b45309;');
+      const daysStr = (course.daysMet || []).join(', ');
+      
+      infoContent.innerHTML = `
+        <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+          <span style="padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; ${typeBadge}">${course.courseType || 'Required'}</span>
+          <span style="padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background: #e8f0fe; color: var(--primary-color);">Room: ${course.roomNumber || 'TBD'}</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+          <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <strong style="color: #0f172a; font-size: 14px;">Schedule</strong><br>
+            <span style="font-size: 13px;">${daysStr || 'TBD'}</span><br>
+            <span style="font-size: 13px;">${formatTime(course.startTime)} - ${formatTime(course.endTime)}</span>
+          </div>
+          <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <strong style="color: #0f172a; font-size: 14px;">Term Dates</strong><br>
+            <span style="font-size: 13px;">Start: ${course.startDate || 'TBD'}</span><br>
+            <span style="font-size: 13px;">End: ${course.endDate || 'TBD'}</span>
+          </div>
+        </div>
+        <div style="font-size: 13px;">
+          <strong style="color: #0f172a; font-size: 14px;">Co-Teachers Assigned:</strong> 
+          ${course.teacherIds && course.teacherIds.length > 1 ? `You and ${course.teacherIds.length - 1} other(s)` : 'Just You'}
+        </div>
+      `;
+      infoModal.classList.remove('hidden');
+    }
+  }
+});
+
+document.getElementById('close-info-modal-btn').addEventListener('click', () => infoModal.classList.add('hidden'));
+document.getElementById('close-info-btn').addEventListener('click', () => infoModal.classList.add('hidden'));
+
 // --- LOAD CUSTOM BRANDING ---
 async function loadSchoolBranding() {
   try {
     const schoolRef = doc(db, "schools", activeSchoolId);
     const schoolSnap = await getDoc(schoolRef);
-    
     if (schoolSnap.exists() && schoolSnap.data().branding) {
       const branding = schoolSnap.data().branding;
-      
       if (branding.primaryColor) {
         document.documentElement.style.setProperty('--primary-color', branding.primaryColor);
         const brandText = document.querySelector('.sidebar .brand h2');
         if (brandText) brandText.style.color = branding.primaryColor;
       }
     }
-  } catch (error) {
-    console.error("Error loading branding:", error);
-  }
+  } catch (error) {}
 }
 
-// --- LOGOUT ---
-logoutBtn.addEventListener('click', () => {
-  signOut(auth).then(() => {
-    localStorage.removeItem('activeSchoolId');
-  });
-});
+logoutBtn.addEventListener('click', () => { signOut(auth).then(() => { localStorage.removeItem('activeSchoolId'); }); });

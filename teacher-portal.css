@@ -156,3 +156,31 @@ td {
   vertical-align: middle; 
   font-size: 14px;
 }
+
+/* --- GLOBAL LOADER & FLICKER FIX --- */
+.dashboard-layout {
+  opacity: 0;
+  transition: opacity 0.4s ease-in-out;
+}
+
+.dashboard-layout.visible {
+  opacity: 1;
+}
+
+#global-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: #f0f2f5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  color: var(--primary-color, #1a73e8);
+  font-weight: 500;
+  z-index: 9999;
+  transition: opacity 0.4s ease;
+}
+

@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, getDocs, collection, query, where, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { hideGlobalLoader, showToast } from "./utils.js";
 
 import { firebaseConfig } from "./config.js";
 
@@ -44,9 +45,17 @@ onAuthStateChanged(auth, async (user) => {
         currentTeacherId = user.uid;
         loadSchoolBranding();
         initializeGradebook(); 
-      } else { window.location.href = 'login.html'; }
-    } catch (e) { window.location.href = 'login.html'; }
-  } else { window.location.href = 'login.html'; }
+        hideGlobalLoader(); 
+        
+      } else {
+        window.location.href = 'login.html';
+      }
+    } catch (error) {
+      window.location.href = 'login.html';
+    }
+  } else {
+    window.location.href = 'login.html';
+  }
 });
 
 // --- MASTER DATA LOADER ---

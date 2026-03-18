@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { hideGlobalLoader, showToast } from "./ultils.js";
 
 import { firebaseConfig } from "./config.js";
 
@@ -39,16 +40,16 @@ onAuthStateChanged(auth, async (user) => {
         loadSchoolBranding();
         loadCourseDetails();
         loadStudentRoster();
+      hideGlobalLoader(); 
+        
       } else {
-        alert("Security Violation: Teacher access required.");
         window.location.href = 'login.html';
       }
     } catch (error) {
       window.location.href = 'login.html';
     }
   } else {
-    // If they navigate here without a course ID in the URL, kick them back to dashboard
-    window.location.href = 'teacher-portal.html';
+    window.location.href = 'login.html';
   }
 });
 

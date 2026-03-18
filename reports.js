@@ -151,7 +151,12 @@ templatesTbody.addEventListener('click', async (e) => {
 generateBtn.addEventListener('click', async () => {
   const targetId = document.getElementById('run-target-select').value;
   const targetName = document.getElementById('run-target-select').options[document.getElementById('run-target-select').selectedIndex].text;
-  if (!targetId) return;
+  
+  // Capture the custom dates!
+  const startDate = document.getElementById('run-start-date').value;
+  const endDate = document.getElementById('run-end-date').value;
+
+  if (!targetId) return alert("Please select a target.");
 
   runModal.classList.add('hidden');
   reportControls.style.display = 'none';
@@ -161,19 +166,25 @@ generateBtn.addEventListener('click', async () => {
   const template = templatesCache[activeTemplateId];
   const mods = template.modules;
 
+  // Update Header to show Date Range if one was applied
+  let dateRangeText = "All Time";
+  if (startDate || endDate) {
+    dateRangeText = `${startDate ? startDate : 'Beginning'} to ${endDate ? endDate : 'Present'}`;
+  }
+
   let html = `<div class="report-header">
                 <h1 style="color: var(--primary-color); margin-bottom: 8px;">${template.name}</h1>
                 <h2>${targetName}</h2>
-                <p style="color: #64748b;">Generated on: ${new Date().toLocaleDateString()}</p>
+                <p style="color: #64748b;">Report Period: ${dateRangeText} <br> Generated on: ${new Date().toLocaleDateString()}</p>
               </div>`;
 
   try {
-    // Modular Generation!
+    // Pass dates down to the builders
     if (template.target === 'course') {
       if (mods.includes('roster')) html += await buildCourseRoster(targetId);
-      if (mods.includes('grades') || mods.includes('missing')) html += await buildCourseGrades(targetId, mods.includes('missing'), mods.includes('grades'));
+      if (mods.includes('grades') || mods.includes('missing')) html += await buildCourseGrades(targetId, mods.includes('missing'), mods.includes('grades'), startDate, endDate);
     } else if (template.target === 'student') {
-      html += await buildStudentData(targetId, mods);
+      html += await buildStudentData(targetId, mods, startDate, endDate);
     }
   } catch (err) {
     console.error(err);
@@ -182,6 +193,14 @@ generateBtn.addEventListener('click', async () => {
 
   reportOutput.innerHTML = html;
 });
+
+// --- HELPER: DATE FILTER ---
+function isWithinDateRange(recordDateStr, startDate, endDate) {
+  if (!recordDateStr) return true; // If the record has no date, let it pass
+  if (startDate && recordDateStr < startDate) return false;
+  if (endDate && recordDateStr > endDate) return false;
+  return true;
+}
 
 // --- MODULE BUILDERS ---
 async function buildCourseRoster(courseId) {
@@ -197,7 +216,7 @@ async function buildCourseRoster(courseId) {
   return `<div class="report-section"><h3>Student Roster</h3><table class="report-table"><thead><tr><th>Name</th><th>Email</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-async function buildCourseGrades(courseId, showMissing, showAll) {
+async function buildCourseGrades(courseId, showMissing, showAll, startDate, endDate) {
   const gradesSnap = await getDocs(query(collection(db, `schools/${activeSchoolId}/grades`), where("courseId", "==", courseId)));
   if (gradesSnap.empty) return `<div class="report-section"><h3>Grade Records</h3><p>No grades logged yet.</p></div>`;
 
@@ -207,9 +226,18 @@ async function buildCourseGrades(courseId, showMissing, showAll) {
   for (const g of gradesSnap.docs) {
     const data = g.data();
     
-    // Filter logic
+    // Filter Logic: Missing vs All
     const isMissing = data.missing === true;
-    if (!showAll && !isMissing) continue; // If we only want missing, skip the rest
+    if (!showAll && !isMissing) continue; 
+
+    // Extract Date from Firebase Timestamp
+    let recordDateStr = "";
+    if (data.timestamp) {
+      recordDateStr = data.timestamp.toDate().toISOString().split('T')[0];
+    }
+    
+    // Apply Date Filter!
+    if (!isWithinDateRange(recordDateStr, startDate, endDate)) continue;
 
     if (!cache.students[data.studentId]) {
       const s = await getDoc(doc(db, `schools/${activeSchoolId}/users`, data.studentId));
@@ -224,24 +252,22 @@ async function buildCourseGrades(courseId, showMissing, showAll) {
     if (isMissing) statusHtml = '<span style="color: #d93025; font-weight:bold;">Missing</span>';
     if (data.noCount) statusHtml = 'No Count';
 
-    rows += `<tr><td>${cache.students[data.studentId]}</td><td>${cache.assignments[data.assignmentId]}</td><td>${statusHtml}</td></tr>`;
+    rows += `<tr><td>${recordDateStr}</td><td>${cache.students[data.studentId]}</td><td>${cache.assignments[data.assignmentId]}</td><td>${statusHtml}</td></tr>`;
   }
 
-  if(!rows) return `<div class="report-section"><h3>Grade Records</h3><p>No records match the filter.</p></div>`;
-  return `<div class="report-section"><h3>Grade Records</h3><table class="report-table"><thead><tr><th>Student</th><th>Assignment</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  if(!rows) return `<div class="report-section"><h3>Grade Records</h3><p>No records match the selected date filter.</p></div>`;
+  return `<div class="report-section"><h3>Grade Records</h3><table class="report-table"><thead><tr><th>Date Logged</th><th>Student</th><th>Assignment</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-async function buildStudentData(studentId, mods) {
+async function buildStudentData(studentId, mods, startDate, endDate) {
   let output = '';
   
-  // 1. Roster & Details
+  // 1. Roster / Profile
   if (mods.includes('roster')) {
     const s = await getDoc(doc(db, `schools/${activeSchoolId}/users`, studentId));
     output += `<div class="report-section"><h3>Student Profile</h3><p><strong>Name:</strong> ${s.data().lastName}, ${s.data().firstName}<br><strong>Email:</strong> ${s.data().email}</p></div>`;
-  }
-  
-  // 2. NEW: Student Schedule (Reverse Lookup)
-  if (mods.includes('roster')) {
+    
+    // Reverse Lookup Schedule
     const scheduleQ = query(collection(db, `schools/${activeSchoolId}/courses`), where("enrolledStudents", "array-contains", studentId));
     const scheduleSnap = await getDocs(scheduleQ);
     let schedRows = '';
@@ -251,7 +277,7 @@ async function buildStudentData(studentId, mods) {
     output += `<div class="report-section"><h3>Current Schedule</h3><table class="report-table"><thead><tr><th>Code</th><th>Course</th><th>Term</th></tr></thead><tbody>${schedRows || '<tr><td colspan="3">Not enrolled in any courses.</td></tr>'}</tbody></table></div>`;
   }
   
-  // 3. Grades & Missing Work (Progress Report / Report Card)
+  // 2. Grades / Missing
   if (mods.includes('grades') || mods.includes('missing')) {
     const gradesSnap = await getDocs(query(collection(db, `schools/${activeSchoolId}/grades`), where("studentId", "==", studentId)));
     let rows = '';
@@ -261,44 +287,50 @@ async function buildStudentData(studentId, mods) {
       const isMissing = data.missing === true;
       if (!mods.includes('grades') && !isMissing) continue;
 
+      let recordDateStr = data.timestamp ? data.timestamp.toDate().toISOString().split('T')[0] : "";
+      if (!isWithinDateRange(recordDateStr, startDate, endDate)) continue;
+
       const a = await getDoc(doc(db, `schools/${activeSchoolId}/courses/${data.courseId}/assignments`, data.assignmentId));
-      const assignName = a.exists() ? a.data().title : 'Unknown Assignment';
+      const assignName = a.exists() ? a.data().title : 'Unknown';
 
       let statusHtml = data.score !== null ? data.score : '--';
       if (isMissing) statusHtml = '<span style="color: #d93025; font-weight:bold;">Missing</span>';
-      if (data.noCount) statusHtml = 'No Count';
       
-      rows += `<tr><td>${assignName}</td><td>${statusHtml}</td></tr>`;
+      rows += `<tr><td>${recordDateStr}</td><td>${assignName}</td><td>${statusHtml}</td></tr>`;
     }
-    output += `<div class="report-section"><h3>Academic Records</h3><table class="report-table"><thead><tr><th>Assignment</th><th>Score</th></tr></thead><tbody>${rows || '<tr><td colspan="2">No matching records.</td></tr>'}</tbody></table></div>`;
+    output += `<div class="report-section"><h3>Academic Progress</h3><table class="report-table"><thead><tr><th>Date Logged</th><th>Assignment</th><th>Score</th></tr></thead><tbody>${rows || '<tr><td colspan="3">No matching records for this period.</td></tr>'}</tbody></table></div>`;
   }
 
-  // 4. NEW: Attendance History
+  // 3. Attendance
   if (mods.includes('attendance')) {
     const attSnap = await getDocs(query(collection(db, `schools/${activeSchoolId}/attendance`), where("studentId", "==", studentId)));
     let attRows = '';
     
-    // Sort attendance by date (newest first)
     const attRecords = [];
     attSnap.forEach(doc => attRecords.push(doc.data()));
     attRecords.sort((a, b) => new Date(b.dateString) - new Date(a.dateString));
 
     for (const record of attRecords) {
+      // Date Filter!
+      if (!isWithinDateRange(record.dateString, startDate, endDate)) continue;
+
       const c = await getDoc(doc(db, `schools/${activeSchoolId}/courses`, record.courseId));
       const courseName = c.exists() ? c.data().courseName : 'Unknown Course';
-      
       let badgeColor = record.status === 'present' ? '#0f9d58' : (record.status === 'absent' ? '#d93025' : '#f59e0b');
       
       attRows += `<tr><td>${record.dateString}</td><td>${courseName}</td><td><strong style="color: ${badgeColor}; text-transform: capitalize;">${record.status}</strong></td></tr>`;
     }
-    output += `<div class="report-section"><h3>Attendance History</h3><table class="report-table"><thead><tr><th>Date</th><th>Course</th><th>Status</th></tr></thead><tbody>${attRows || '<tr><td colspan="3">No attendance records found.</td></tr>'}</tbody></table></div>`;
+    output += `<div class="report-section"><h3>Attendance History</h3><table class="report-table"><thead><tr><th>Date</th><th>Course</th><th>Status</th></tr></thead><tbody>${attRows || '<tr><td colspan="3">No attendance records for this period.</td></tr>'}</tbody></table></div>`;
   }
 
   return output;
 }
 
 // --- MODAL & UI CONTROLS ---
-createTemplateBtn.addEventListener('click', () => builderModal.classList.remove('hidden'));
+createTemplateBtn.addEventListener('click', () => {
+  builderModal.classList.remove('hidden');
+  document.getElementById('template-form').reset(); // Ensure it opens clean
+});
 document.getElementById('close-modal-btn').addEventListener('click', () => builderModal.classList.add('hidden'));
 document.getElementById('cancel-btn').addEventListener('click', () => builderModal.classList.add('hidden'));
 document.getElementById('close-run-btn').addEventListener('click', () => runModal.classList.add('hidden'));
@@ -306,6 +338,9 @@ document.getElementById('cancel-run-btn').addEventListener('click', () => runMod
 document.getElementById('close-report-btn').addEventListener('click', () => {
   reportContainer.style.display = 'none';
   reportControls.style.display = 'block';
+  // Clear the date inputs when going back so they don't accidentally carry over
+  document.getElementById('run-start-date').value = '';
+  document.getElementById('run-end-date').value = '';
 });
 
 async function loadSchoolBranding() {
@@ -319,4 +354,5 @@ async function loadSchoolBranding() {
   } catch (e) {}
 }
 
+logoutBtn.addEventListener('click', () => { signOut(auth).then(() => { localStorage.removeItem('activeSchoolId'); }); });
 logoutBtn.addEventListener('click', () => { signOut(auth).then(() => { localStorage.removeItem('activeSchoolId'); }); });

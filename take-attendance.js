@@ -28,28 +28,29 @@ const today = new Date();
 const dateString = today.toISOString().split('T')[0]; // YYYY-MM-DD format
 dateDisplayEl.innerText = today.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-// --- AUTHENTICATION & INITIALIZATION ---
+// --- AUTHENTICATION ---
 onAuthStateChanged(auth, async (user) => {
-  if (user && activeSchoolId && activeCourseId) {
-    try {
-      const userProfileRef = doc(db, `schools/${activeSchoolId}/users`, user.uid);
-      const userProfileSnap = await getDoc(userProfileRef);
+  if (!activeCourseId) return window.location.href = 'teacher-portal.html';
 
+  if (user && activeSchoolId) {
+    try {
+      const userProfileSnap = await getDoc(doc(db, `schools/${activeSchoolId}/users`, user.uid));
       if (userProfileSnap.exists() && userProfileSnap.data().role === 'teacher') {
         currentTeacherId = user.uid;
         loadSchoolBranding();
-        loadCourseDetails();
-        loadStudentRoster();
-      hideGlobalLoader(); 
         
-      } else {
-        window.location.href = 'login.html';
+        // Wait for the gradebook to build, THEN hide the loader
+        await initializeGradebook(); 
+        hideGlobalLoader(); 
+        
+      } else { 
+        window.location.href = 'login.html'; 
       }
-    } catch (error) {
-      window.location.href = 'login.html';
+    } catch (e) { 
+      window.location.href = 'login.html'; 
     }
-  } else {
-    window.location.href = 'login.html';
+  } else { 
+    window.location.href = 'login.html'; 
   }
 });
 

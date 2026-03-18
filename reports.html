@@ -114,13 +114,24 @@
         <h2 id="run-modal-title">Run Report</h2>
         <button id="close-run-btn" class="close-btn">&times;</button>
       </div>
+      
       <div class="input-group">
         <label id="run-target-label" for="run-target-select">Select Target</label>
         <select id="run-target-select" required>
           <option value="" disabled selected>Loading...</option>
         </select>
       </div>
-      <div class="modal-actions">
+
+      <div class="input-group" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+        <label>Date Range Filter (Optional)</label>
+        <div style="display: flex; gap: 12px; margin-top: 8px;">
+          <input type="date" id="run-start-date" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <span style="align-self: center; color: #64748b; font-size: 14px;">to</span>
+          <input type="date" id="run-end-date" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+        </div>
+        <p style="font-size: 12px; color: #64748b; margin-top: 6px;">Leave blank to pull all-time records.</p>
+      </div>
+      <div class="modal-actions" style="margin-top: 24px;">
         <button type="button" id="cancel-run-btn" class="btn-secondary">Cancel</button>
         <button type="button" id="generate-report-btn" class="btn-primary">Generate</button>
       </div>

@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { hideGlobalLoader, showToast } from "./utils.js";
 
 import { firebaseConfig } from "./config.js";
 
@@ -34,12 +35,12 @@ onAuthStateChanged(auth, async (user) => {
       if (userProfileSnap.exists() && userProfileSnap.data().role === 'admin') {
         displaySchoolName.innerText = `Managing Configuration for: ${activeSchoolId}`;
         loadSchoolSettings();
+     hideGlobalLoader(); 
+        
       } else {
-        alert("Security Violation: Admins only.");
         window.location.href = 'login.html';
       }
     } catch (error) {
-      console.error("Auth error:", error);
       window.location.href = 'login.html';
     }
   } else {

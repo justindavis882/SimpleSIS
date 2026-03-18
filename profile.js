@@ -85,6 +85,12 @@ function buildNavigation(role) {
       <a href="reports.html">Reports</a>
       <a href="profile.html" class="active">My Profile</a>
     `;
+
+  } else if (role === 'student') {
+    dynamicSidebar.innerHTML = `
+      <a href="student-portal.html">My Dashboard</a>
+      <a href="profile.html" class="active">My Profile</a>
+    `;
   }
 }
 

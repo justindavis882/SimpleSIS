@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { hidegloabalLoader, showToast } from "./utils.js";
 
 import { firebaseConfig } from "./config.js";
 
@@ -43,6 +44,8 @@ onAuthStateChanged(auth, async (user) => {
         loadSchoolBranding();
         buildNavigation(userData.role);
         populateProfileForm(userData);
+      hideGlobalLoader(); 
+        
       } else {
         window.location.href = 'login.html';
       }
@@ -53,7 +56,6 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = 'login.html';
   }
 });
-
 // --- DYNAMIC SIDEBAR BUILDER ---
 // This ensures that Teachers get the Teacher sidebar, and Admins get the Admin sidebar!
 function buildNavigation(role) {

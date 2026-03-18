@@ -82,6 +82,7 @@ function buildNavigation(role) {
       <a href="teacher-portal.html">My Dashboard</a>
       <a href="teacher-portal.html">Take Attendance</a>
       <a href="teacher-portal.html">Gradebook</a>
+      <a href="reports.html">Reports</a>
       <a href="profile.html" class="active">My Profile</a>
     `;
   }

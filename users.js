@@ -1,16 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-// 1. Initialize Primary Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyCLkAIMy7R5UEoirN4CaVWuKJbCxzyQBVI",
-  authDomain: "simplesis-f3606.firebaseapp.com",
-  projectId: "simplesis-f3606",
-  storageBucket: "simplesis-f3606.firebasestorage.app",
-  messagingSenderId: "217211857685",
-  appId: "1:217211857685:web:56bc8f3e196d076599d71c",
-  measurementId: "G-JKEFLYBDQK"
-};
+
+import { firebaseConfig } from "./config.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);

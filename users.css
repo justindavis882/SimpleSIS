@@ -46,7 +46,7 @@ nav a:hover, nav a.active { background-color: #e8f0fe; color: var(--primary-colo
 
 /* Buttons */
 .btn-primary, .btn-secondary, .btn-danger { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; }
-.btn-primary { background: var(--primary-color); color: white; }
+.btn-primary { background: black; color: white; }
 .btn-primary:hover { background: var(--primary-hover); }
 .btn-secondary { background: transparent; border: 1px solid #cbd5e1; color: #475569; width: 100%;}
 .btn-secondary:hover { background: #f1f5f9; }

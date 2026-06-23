@@ -146,6 +146,17 @@ form.addEventListener('submit', async (e) => {
 
     const userProfileRef = doc(db, `schools/${activeSchoolId}/users`, newUid);
     await setDoc(userProfileRef, payload);
+
+    // RESTORED: Close modal and reset form on success
+    closeModal();
+    form.reset();
+
+  } catch (error) { // RESTORED: Catch block
+    console.error("Error creating user:", error);
+    alert(`Failed to create user: ${error.message}`);
+  } finally { // RESTORED: Finally block to reset the button
+    submitBtn.innerText = "Create User";
+    submitBtn.disabled = false;
   }
 });
 

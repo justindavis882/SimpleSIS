@@ -224,4 +224,4 @@ async function loadSchoolBranding() {
   } catch (error) {
     console.error("Error loading branding:", error);
   }
-}
+};

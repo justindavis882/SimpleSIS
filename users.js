@@ -146,6 +146,7 @@ form.addEventListener('submit', async (e) => {
 
     const userProfileRef = doc(db, `schools/${activeSchoolId}/users`, newUid);
     await setDoc(userProfileRef, payload);
+  });
 
 // --- UPDATE & DELETE ---
 function attachTableListeners() {

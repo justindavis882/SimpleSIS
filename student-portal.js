@@ -104,51 +104,42 @@ async function loadSchedule() {
   } catch (error) { console.error("Error loading schedule:", error); }
 }
 
-// --- 2. LOAD MISSING WORK ---
+// --- 2. LOAD SPRINT BOARD ---
 async function loadMissingWork() {
   try {
-    // Query grades for this student where missing == true
-    const q = query(collection(db, `schools/${activeSchoolId}/grades`), where("studentId", "==", currentStudentId), where("missing", "==", true));
-    const snaps = await getDocs(q);
+    // For MVP, we will pull ALL assignments from enrolled courses to act as the Sprint Board
+    const courseQ = query(collection(db, `schools/${activeSchoolId}/courses`), where("enrolledStudents", "array-contains", currentStudentId));
+    const courseSnaps = await getDocs(courseQ);
     
     missingWorkContainer.innerHTML = '';
-    let missingCount = 0;
+    let overdueCount = 0;
 
-    if (snaps.empty) {
-      missingWorkContainer.innerHTML = `
-        <div style="text-align: center; padding: 20px 0;">
-          <div style="font-size: 32px; margin-bottom: 8px;">🎉</div>
-          <p style="color: #0f9d58; font-weight: 500;">You're all caught up!</p>
-          <p style="font-size: 13px; color: #64748b;">No missing assignments logged.</p>
-        </div>`;
-      return;
-    }
-
-    for (const docSnap of snaps.docs) {
-      const data = docSnap.data();
-      missingCount++;
-
-      // Fetch the assignment name
-      const aSnap = await getDoc(doc(db, `schools/${activeSchoolId}/courses/${data.courseId}/assignments`, data.assignmentId));
-      const assignName = aSnap.exists() ? aSnap.data().title : 'Unknown Assignment';
+    for (const cSnap of courseSnaps.docs) {
+      const courseId = cSnap.id;
+      const courseName = cSnap.data().courseName;
       
-      // Fetch the course name
-      const cSnap = await getDoc(doc(db, `schools/${activeSchoolId}/courses`, data.courseId));
-      const courseName = cSnap.exists() ? cSnap.data().courseName : '';
-
-      missingWorkContainer.innerHTML += `
-        <div style="padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
-          <strong style="display: block; color: #0f172a; font-size: 14px;">${assignName}</strong>
-          <span style="font-size: 12px; color: #d93025; font-weight: 500;">${courseName}</span>
-        </div>
-      `;
+      const assignSnaps = await getDocs(collection(db, `schools/${activeSchoolId}/courses/${courseId}/assignments`));
+      
+      assignSnaps.forEach(aSnap => {
+        const assign = aSnap.data();
+        // Check if grade exists and is missing
+        // For MVP: Displaying it as a task to complete
+        missingWorkContainer.innerHTML += `
+          <div style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px;">
+            <input type="checkbox" style="width: 18px; height: 18px; cursor: pointer;">
+            <div>
+              <strong style="display: block; color: #0f172a; font-size: 14px;">${assign.title}</strong>
+              <span style="font-size: 12px; color: var(--primary-color); font-weight: 500;">${courseName} &bull; Due: ${assign.dateDue}</span>
+            </div>
+          </div>
+        `;
+      });
     }
 
-    // Update the red badge
-    missingCountBadge.innerText = `${missingCount} Missing`;
-    missingCountBadge.classList.remove('hidden');
-
-  } catch (error) { console.error("Error loading missing work:", error); }
+    if (missingWorkContainer.innerHTML === '') {
+      missingWorkContainer.innerHTML = `<p style="color: #0f9d58; font-weight: 500; text-align: center;">No tasks in the current sprint.</p>`;
+    }
+  } catch (error) { console.error("Error loading sprint board:", error); }
 }
 
 // --- 3. LOAD ATTENDANCE ---

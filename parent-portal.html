@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stakeholder Portal | SimpleSIS</title>
+  <link rel="stylesheet" href="teacher-portal.css">
+  <style>
+    .portal-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .portal-grid { grid-template-columns: 1fr; }
+    }
+    .dashboard-card {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid #eaebed;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .status-pending { background: #fef3c7; color: #b45309; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <div id="global-loader">Loading SimpleSIS...</div>
+  
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <img id="sidebar-logo" src="https://i.ibb.co/0yr3x8Yn/Newton.png" alt="School Logo" class="" style="max-width: 150px; max-height: 150px; width: 100%; object-fit: contain; border-radius: 8px;">
+        <h2 id="sidebar-brand-name" style="color: rgb(0, 36, 143);">SimpleSIS</h2>
+      </div>
+      <nav>
+        <a href="parent-portal.html" class="active">Stakeholder Dashboard</a>
+        <a href="profile.html">My Profile</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn-secondary">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header" style="margin-bottom: 30px;">
+        <div>
+          <h1 id="welcome-message">Welcome, Stakeholder</h1>
+          <p id="student-name-display" class="subtitle">Loading student data...</p>
+        </div>
+      </header>
+
+      <div class="portal-grid">
+        
+        <section class="dashboard-card">
+          <h2 style="font-size: 18px; color: #0f172a; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Log Compliance Hours</h2>
+          <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Submit at-home hours for state compliance. These will remain pending until approved by the Creative Director.</p>
+          
+          <form id="log-hours-form">
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-size: 14px; margin-bottom: 6px; font-weight: 500; color: #475569;">Requirement Category</label>
+              <select id="hour-type" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px;">
+                <option value="" disabled selected>Select category...</option>
+                <option value="PEH101">PEH101: Physical Education & Health</option>
+                <option value="LAN101">LAN101: World Language</option>
+              </select>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-size: 14px; margin-bottom: 6px; font-weight: 500; color: #475569;">Date Completed</label>
+              <input type="date" id="hour-date" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px;">
+            </div>
+
+            <div style="margin-bottom: 24px;">
+              <label style="display: block; font-size: 14px; margin-bottom: 6px; font-weight: 500; color: #475569;">Hours Logged</label>
+              <input type="number" id="hour-amount" step="0.25" min="0.25" placeholder="e.g., 1.5" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px;">
+            </div>
+
+            <button type="submit" id="submit-hours-btn" class="btn-primary" style="width: 100%;">Submit Hours</button>
+          </form>
+
+          <div id="recent-logs-container" style="margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+            <h3 style="font-size: 14px; color: #475569; margin-bottom: 12px;">Recent Submissions</h3>
+            <ul id="recent-logs-list" style="list-style: none; padding: 0; font-size: 13px; color: #0f172a;">
+              <li style="color: #64748b;">Loading history...</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="dashboard-card table-container" style="padding: 0; overflow: hidden;">
+          <div style="padding: 24px 24px 0 24px;">
+            <h2 style="font-size: 18px; color: #0f172a; margin-bottom: 16px;">Academic Progress Overview</h2>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+              <tr>
+                <th style="padding: 12px 24px; font-size: 12px; text-transform: uppercase; color: #64748b;">Course</th>
+                <th style="padding: 12px 24px; font-size: 12px; text-transform: uppercase; color: #64748b;">Assignment</th>
+                <th style="padding: 12px 24px; font-size: 12px; text-transform: uppercase; color: #64748b;">Score / Status</th>
+              </tr>
+            </thead>
+            <tbody id="grades-tbody">
+              <tr>
+                <td colspan="3" style="padding: 24px; text-align: center; color: #64748b;">Loading academic records...</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="parent-portal.js"></script>
+</body>
+</html>

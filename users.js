@@ -123,36 +123,29 @@ form.addEventListener('submit', async (e) => {
   const email = document.getElementById('new-email').value.trim();
   const password = document.getElementById('new-password').value;
   const role = document.getElementById('new-role').value;
+  const emergencyInfo = document.getElementById('new-emergency-info').value.trim(); // NEW
 
   try {
-    // 1. Create Auth record using the Secondary App
     const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
     const newUid = userCredential.user.uid;
-
-    // 2. Instantly sign out of the secondary app so it's fresh for the next one
     await signOut(secondaryAuth);
 
-    // 3. Create the Database Document tying them to this specific school
-    const userProfileRef = doc(db, `schools/${activeSchoolId}/users`, newUid);
-    await setDoc(userProfileRef, {
+    const payload = {
       firstName: fName,
       lastName: lName,
       email: email,
       role: role,
       isActive: true,
       createdAt: new Date()
-    });
+    };
 
-    closeModal();
-    form.reset();
-  } catch (error) {
-    console.error("Error creating user:", error);
-    alert(`Failed to create user: ${error.message}`);
-  } finally {
-    submitBtn.innerText = "Create User";
-    submitBtn.disabled = false;
-  }
-});
+    // Only attach emergency info if it's a student
+    if (role === 'student' && emergencyInfo) {
+      payload.emergencyContact = emergencyInfo;
+    }
+
+    const userProfileRef = doc(db, `schools/${activeSchoolId}/users`, newUid);
+    await setDoc(userProfileRef, payload);
 
 // --- UPDATE & DELETE ---
 function attachTableListeners() {

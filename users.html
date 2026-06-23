@@ -85,11 +85,15 @@
         </div>
         <div class="input-group">
           <label for="new-role">System Role</label>
-          <select id="new-role" required>
+          <select id="new-role" required onchange="document.getElementById('emergency-group').style.display = this.value === 'student' ? 'block' : 'none';">
             <option value="student">Student</option>
             <option value="teacher">Teacher</option>
             <option value="admin">Administrator</option>
-          </select>
+            <option value="parent">Parent/Stakeholder</option> </select>
+        </div>
+        <div class="input-group" id="emergency-group">
+          <label for="new-emergency-info">Emergency Contact Info</label>
+          <input type="text" id="new-emergency-info" placeholder="Name, Relation, & Phone Number">
         </div>
         <div class="modal-actions">
           <button type="button" id="cancel-btn" class="btn-secondary">Cancel</button>

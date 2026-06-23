@@ -58,6 +58,8 @@ loginForm.addEventListener('submit', async (e) => {
         window.location.href = 'teacher-portal.html'; 
       } else if (userData.role === 'student') {
         window.location.href = 'student-portal.html'; 
+      } else if (userData.role === 'parent') { // NEW ROUTE
+        window.location.href = 'parent-portal.html'; 
       } else {
         await auth.signOut();
         showError("Invalid role assignment.");

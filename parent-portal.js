@@ -125,6 +125,62 @@ async function loadStudentGrades() {
     gradesTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:red;">Error loading records.</td></tr>';
   }
 }
+// --- LOAD RECENT COMPLIANCE LOGS & PROGRESS ---
+async function loadRecentComplianceLogs() {
+  try {
+    // 1. Fetch the student's assigned requirements from their profile
+    const studentSnap = await getDoc(doc(db, `schools/${activeSchoolId}/users`, linkedStudentId));
+    const reqs = studentSnap.exists() ? studentSnap.data().complianceRequirements || {} : {};
+    
+    // Default to 0 if the Admin hasn't assigned them hours yet
+    document.getElementById('peh-required').innerText = reqs.PEH101 !== undefined ? reqs.PEH101 : 0;
+    document.getElementById('lan-required').innerText = reqs.LAN101 !== undefined ? reqs.LAN101 : 0;
+
+    // 2. Fetch all their logged hours
+    const q = query(collection(db, `schools/${activeSchoolId}/compliance_hours`), where("studentId", "==", linkedStudentId), orderBy("timestamp", "desc"));
+    const snaps = await getDocs(q);
+
+    recentLogsList.innerHTML = '';
+    let pehApproved = 0;
+    let lanApproved = 0;
+
+    if (snaps.empty) {
+      recentLogsList.innerHTML = '<li style="color: #64748b; padding: 8px 0;">No hours logged yet.</li>';
+      return;
+    }
+
+    snaps.forEach(docSnap => {
+      const data = docSnap.data();
+      
+      // Tally approved hours for the progress bars
+      if (data.status === 'approved') {
+        if (data.courseCode === 'PEH101') pehApproved += data.hoursLog;
+        if (data.courseCode === 'LAN101') lanApproved += data.hoursLog;
+      }
+
+      // Render History List (Limit visually to save space, but we tallied all of them above)
+      const statusBadge = data.status === 'pending' 
+        ? '<span class="status-pending">Pending</span>' 
+        : (data.status === 'approved' ? '<span style="color:#0f9d58; font-weight:bold; font-size:11px; text-transform:uppercase;">Approved</span>' : '<span style="color:#d93025; font-weight:bold; font-size:11px; text-transform:uppercase;">Rejected</span>');
+
+      recentLogsList.innerHTML += `
+        <li style="padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+            <strong style="color:var(--primary-color);">${data.courseCode}</strong>
+            ${statusBadge}
+          </div>
+          <p style="color:#475569; margin-bottom: 4px;">${data.taskDescription}</p>
+          <span style="color:#94a3b8; font-size: 11px;">${data.dateCompleted} &bull; ${data.hoursLog} hrs</span>
+        </li>
+      `;
+    });
+
+    // Update Progress UI
+    document.getElementById('peh-completed').innerText = pehApproved;
+    document.getElementById('lan-completed').innerText = lanApproved;
+
+  } catch (error) { console.error("Error loading logs:", error); }
+}
 
 // --- SUBMIT COMPLIANCE HOURS ---
 hoursForm.addEventListener('submit', async (e) => {
@@ -140,7 +196,8 @@ hoursForm.addEventListener('submit', async (e) => {
     courseCode: document.getElementById('hour-type').value,
     dateCompleted: document.getElementById('hour-date').value,
     hoursLog: parseFloat(document.getElementById('hour-amount').value),
-    status: 'pending', // Will require Admin approval later
+    taskDescription: document.getElementById('hour-task').value.trim(), // NEW FIELD
+    status: 'pending', 
     timestamp: serverTimestamp()
   };
 
@@ -148,7 +205,7 @@ hoursForm.addEventListener('submit', async (e) => {
     await addDoc(collection(db, `schools/${activeSchoolId}/compliance_hours`), payload);
     alert("Hours successfully submitted for review!");
     hoursForm.reset();
-    loadRecentComplianceLogs(); // Refresh the mini list
+    loadRecentComplianceLogs(); // Refresh the list and progress bars instantly
   } catch (error) {
     console.error("Error submitting hours:", error);
     alert("Failed to submit hours.");
@@ -157,45 +214,6 @@ hoursForm.addEventListener('submit', async (e) => {
     submitHoursBtn.disabled = false;
   }
 });
-
-// --- LOAD RECENT COMPLIANCE LOGS ---
-async function loadRecentComplianceLogs() {
-  try {
-    const q = query(
-      collection(db, `schools/${activeSchoolId}/compliance_hours`), 
-      where("studentId", "==", linkedStudentId),
-      orderBy("timestamp", "desc"),
-      limit(5)
-    );
-    const snaps = await getDocs(q);
-
-    recentLogsList.innerHTML = '';
-
-    if (snaps.empty) {
-      recentLogsList.innerHTML = '<li style="color: #64748b; padding: 8px 0;">No hours logged recently.</li>';
-      return;
-    }
-
-    snaps.forEach(docSnap => {
-      const data = docSnap.data();
-      const statusBadge = data.status === 'pending' 
-        ? '<span class="status-pending">Pending Review</span>' 
-        : '<span style="color:#0f9d58; font-weight:bold; font-size:11px; text-transform:uppercase;">Approved</span>';
-
-      recentLogsList.innerHTML += `
-        <li style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <strong style="display:block; color:var(--primary-color);">${data.courseCode}</strong>
-            <span style="color:#64748b;">${data.dateCompleted} &bull; ${data.hoursLog} hrs</span>
-          </div>
-          ${statusBadge}
-        </li>
-      `;
-    });
-  } catch (error) {
-    console.error("Error loading logs:", error);
-  }
-}
 
 // --- LOAD CUSTOM BRANDING ---
 async function loadSchoolBranding() {

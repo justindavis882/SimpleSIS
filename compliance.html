@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Compliance Approvals | SimpleSIS</title>
+  <link rel="stylesheet" href="teacher-portal.css">
+</head>
+<body>
+  <div id="global-loader">Loading SimpleSIS...</div>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2 id="sidebar-brand-name" style="color: rgb(0, 36, 143);">SimpleSIS</h2>
+      </div>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="users.html">Users & Roles</a>
+        <a href="courses.html">Courses & Pacing</a>
+        <a href="enrollment.html">Enrollment</a>
+        <a href="compliance.html" class="active">Compliance</a>
+        <a href="reports.html">Reports</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn-secondary">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header" style="margin-bottom: 30px;">
+        <div>
+          <h1>Compliance Management</h1>
+          <p class="subtitle">Assign requirements and approve submitted paper trails.</p>
+        </div>
+      </header>
+
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: start;">
+        
+        <section class="dashboard-card" style="background: white; padding: 24px; border-radius: 12px; border: 1px solid #eaebed;">
+          <h2 style="font-size: 18px; margin-bottom: 16px;">Set Student Requirements</h2>
+          <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Assign the target hours required for a specific student (e.g., set to 0 for exempt athletes).</p>
+          
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 14px; margin-bottom: 6px;">Select Student</label>
+            <select id="req-student-select" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+              <option value="" disabled selected>Loading students...</option>
+            </select>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <div style="flex: 1;">
+              <label style="display: block; font-size: 14px; margin-bottom: 6px;">PEH101 Goal</label>
+              <input type="number" id="req-peh" disabled style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+            </div>
+            <div style="flex: 1;">
+              <label style="display: block; font-size: 14px; margin-bottom: 6px;">LAN101 Goal</label>
+              <input type="number" id="req-lan" disabled style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+            </div>
+          </div>
+          
+          <button id="save-req-btn" class="btn-primary" disabled style="width: 100%;">Save Requirements</button>
+        </section>
+
+        <section class="table-container">
+          <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+              <tr>
+                <th style="padding: 16px 24px; font-size: 13px; text-transform: uppercase; color: #64748b;">Pending Logs & Tasks</th>
+                <th style="padding: 16px 24px; font-size: 13px; text-transform: uppercase; color: #64748b; text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="approvals-tbody">
+              <tr>
+                <td colspan="2" style="padding: 24px; text-align: center; color: #64748b;">Loading pending submissions...</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+      </div>
+    </main>
+  </div>
+  <script type="module" src="compliance.js"></script>
+</body>
+</html>

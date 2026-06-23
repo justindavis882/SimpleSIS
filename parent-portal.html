@@ -54,17 +54,33 @@
       <div class="portal-grid">
         
         <section class="dashboard-card">
-          <h2 style="font-size: 18px; color: #0f172a; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Log Compliance Hours</h2>
-          <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Submit at-home hours for state compliance. These will remain pending until approved by the Creative Director.</p>
+          <h2 style="font-size: 18px; color: #0f172a; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Compliance Tracking</h2>
           
-          <form id="log-hours-form">
-            <div style="margin-bottom: 16px;">
-              <label style="display: block; font-size: 14px; margin-bottom: 6px; font-weight: 500; color: #475569;">Requirement Category</label>
-              <select id="hour-type" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px;">
-                <option value="" disabled selected>Select category...</option>
-                <option value="PEH101">PEH101: Physical Education & Health</option>
-                <option value="LAN101">LAN101: World Language</option>
-              </select>
+          <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+            <div style="flex: 1; padding: 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
+              <h3 style="font-size: 12px; color: #64748b; text-transform: uppercase; margin-bottom: 8px;">PEH101 Progress</h3>
+              <p style="font-size: 20px; font-weight: bold; color: var(--primary-color);"><span id="peh-completed">0</span> <span style="font-size: 14px; color: #475569; font-weight: 500;">/ <span id="peh-required">0</span> hrs</span></p>
+            </div>
+            <div style="flex: 1; padding: 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
+              <h3 style="font-size: 12px; color: #64748b; text-transform: uppercase; margin-bottom: 8px;">LAN101 Progress</h3>
+              <p style="font-size: 20px; font-weight: bold; color: var(--primary-color);"><span id="lan-completed">0</span> <span style="font-size: 14px; color: #475569; font-weight: 500;">/ <span id="lan-required">0</span> hrs</span></p>
+            </div>
+          </div>
+
+          <form id="log-hours-form" style="border-top: 1px solid #e2e8f0; padding-top: 20px;">
+            <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+              <div style="flex: 2;">
+                <label style="display: block; font-size: 14px; margin-bottom: 6px; font-weight: 500; color: #475569;">Category</label>
+                <select id="hour-type" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px;">
+                  <option value="" disabled selected>Select category...</option>
+                  <option value="PEH101">PEH101: Physical Education</option>
+                  <option value="LAN101">LAN101: World Language</option>
+                </select>
+              </div>
+              <div style="flex: 1;">
+                <label style="display: block; font-size: 14px; margin-bottom: 6px; font-weight: 500; color: #475569;">Hours</label>
+                <input type="number" id="hour-amount" step="0.25" min="0.25" placeholder="0.5" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px;">
+              </div>
             </div>
             
             <div style="margin-bottom: 16px;">
@@ -73,15 +89,15 @@
             </div>
 
             <div style="margin-bottom: 24px;">
-              <label style="display: block; font-size: 14px; margin-bottom: 6px; font-weight: 500; color: #475569;">Hours Logged</label>
-              <input type="number" id="hour-amount" step="0.25" min="0.25" placeholder="e.g., 1.5" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px;">
+              <label style="display: block; font-size: 14px; margin-bottom: 6px; font-weight: 500; color: #475569;">Task Description (Paper Trail)</label>
+              <textarea id="hour-task" rows="3" placeholder="e.g., Travel baseball tournament in Ohio, 3 games played." required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
             </div>
 
             <button type="submit" id="submit-hours-btn" class="btn-primary" style="width: 100%;">Submit Hours</button>
           </form>
 
-          <div id="recent-logs-container" style="margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 16px;">
-            <h3 style="font-size: 14px; color: #475569; margin-bottom: 12px;">Recent Submissions</h3>
+          <div id="recent-logs-container" style="margin-top: 30px;">
+            <h3 style="font-size: 14px; color: #475569; margin-bottom: 12px;">Submission History</h3>
             <ul id="recent-logs-list" style="list-style: none; padding: 0; font-size: 13px; color: #0f172a;">
               <li style="color: #64748b;">Loading history...</li>
             </ul>

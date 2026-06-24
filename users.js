@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, getDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 import { hideGlobalLoader, showToast } from "./utils.js";
 
@@ -96,6 +96,7 @@ function loadUsers() {
 
       // Build the standard action buttons
       let actionButtons = `
+        <button class="btn-secondary edit-user-btn" style="width:auto; margin-right: 8px;" data-uid="${uid}">Edit</button>
         <button class="btn-secondary toggle-status-btn" style="width:auto;" data-uid="${uid}" data-active="${isActive}">Toggle Status</button>
         <button class="btn-danger delete-btn" data-uid="${uid}">Delete</button>
       `;
@@ -333,3 +334,100 @@ linkForm.addEventListener('submit', async (e) => {
 closeLinkModalBtn.addEventListener('click', () => {
   linkModal.classList.add('hidden');
 });
+
+// --- EDIT USER & PASSWORD RESET SYSTEM ---
+const editModal = document.getElementById('edit-user-modal');
+const editForm = document.getElementById('edit-user-form');
+const closeEditBtn = document.getElementById('close-edit-modal-btn');
+const submitEditBtn = document.getElementById('submit-edit-btn');
+const sendResetBtn = document.getElementById('send-reset-btn');
+
+// 1. Intercept the Edit Button Click (Hook into the existing attachTableListeners)
+const prevAttachTableListeners = window.attachTableListeners;
+window.attachTableListeners = function() {
+  if (typeof prevAttachTableListeners === 'function') prevAttachTableListeners(); 
+
+  document.querySelectorAll('.edit-user-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const uid = e.target.getAttribute('data-uid');
+      
+      try {
+        const userDoc = await getDoc(doc(db, `schools/${activeSchoolId}/users`, uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          
+          // Populate Form
+          document.getElementById('edit-uid').value = uid;
+          document.getElementById('edit-first-name').value = data.firstName || '';
+          document.getElementById('edit-last-name').value = data.lastName || '';
+          document.getElementById('edit-email').value = data.email || '';
+          document.getElementById('edit-role').value = data.role || 'student';
+          
+          // Handle Emergency Info Visibility
+          const emergencyGroup = document.getElementById('edit-emergency-group');
+          const emergencyInput = document.getElementById('edit-emergency-info');
+          if (data.role === 'student') {
+            emergencyGroup.style.display = 'block';
+            emergencyInput.value = data.emergencyContact || '';
+          } else {
+            emergencyGroup.style.display = 'none';
+            emergencyInput.value = '';
+          }
+
+          editModal.classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    });
+  });
+};
+
+// 2. Save Updates
+editForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  submitEditBtn.innerText = "Saving...";
+  submitEditBtn.disabled = true;
+
+  const uid = document.getElementById('edit-uid').value;
+  const role = document.getElementById('edit-role').value;
+  
+  const payload = {
+    firstName: document.getElementById('edit-first-name').value.trim(),
+    lastName: document.getElementById('edit-last-name').value.trim(),
+    role: role
+  };
+
+  // Attach emergency contact if student
+  if (role === 'student') {
+    payload.emergencyContact = document.getElementById('edit-emergency-info').value.trim();
+  }
+
+  try {
+    await updateDoc(doc(db, `schools/${activeSchoolId}/users`, uid), payload);
+    editModal.classList.add('hidden');
+  } catch (error) {
+    console.error("Error updating user:", error);
+    alert("Failed to update user profile.");
+  } finally {
+    submitEditBtn.innerText = "Save Changes";
+    submitEditBtn.disabled = false;
+  }
+});
+
+// 3. Trigger Password Reset Email
+sendResetBtn.addEventListener('click', async () => {
+  const email = document.getElementById('edit-email').value;
+  if (confirm(`Send a password reset email to ${email}?`)) {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert("Password reset email dispatched successfully! They should check their inbox/spam folders.");
+    } catch (error) {
+      console.error("Error sending reset email:", error);
+      alert("Failed to send email. " + error.message);
+    }
+  }
+});
+
+// 4. Close Modal
+closeEditBtn.addEventListener('click', () => { editModal.classList.add('hidden'); });

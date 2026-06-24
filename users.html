@@ -11,12 +11,11 @@
   <div class="dashboard-layout">
     <aside class="sidebar">
       <div class="brand">
-        <img id="sidebar-logo" src="https://i.ibb.co/0yr3x8Yn/Newton.png" alt="School Logo" class="" style="max-width: 150px; max-height: 150px; width: 100%; object-fit: contain; border-radius: 8px;">
-          <h2 id="sidebar-brand-name" style="color: rgb(0, 36, 143);">SimpleSIS</h2>
+        <img id="sidebar-logo" src="" alt="School Logo" class="hidden" style="max-width: 150px; max-height: 150px; width: 100%; object-fit: contain; border-radius: 8px;">
+        <h2 id="sidebar-brand-name" style="color: rgb(0, 36, 143);">SimpleSIS</h2>
       </div>
       <nav>
         <a href="dashboard.html">Dashboard</a>
-        <a href="compliance.html">Compliance</a>
         <a href="users.html" class="active">Users & Roles</a>
         <a href="courses.html">Courses & Pacing</a>
         <a href="enrollment.html">Enrollment</a>
@@ -53,7 +52,8 @@
             </tr>
           </thead>
           <tbody id="users-tbody">
-            </tbody>
+            <tr><td colspan="5" style="text-align: center;">Loading users...</td></tr>
+          </tbody>
         </table>
       </section>
     </main>
@@ -86,13 +86,14 @@
         </div>
         <div class="input-group">
           <label for="new-role">System Role</label>
-          <select id="new-role" required onchange="document.getElementById('emergency-group').style.display = this.value === 'student' ? 'block' : 'none';">
+          <select id="new-role" required onchange="document.getElementById('new-emergency-group').style.display = this.value === 'student' ? 'block' : 'none';">
             <option value="student">Student</option>
             <option value="teacher">Teacher</option>
             <option value="admin">Administrator</option>
-            <option value="parent">Parent/Stakeholder</option> </select>
+            <option value="parent">Parent/Stakeholder</option>
+          </select>
         </div>
-        <div class="input-group" id="emergency-group">
+        <div class="input-group" id="new-emergency-group">
           <label for="new-emergency-info">Emergency Contact Info</label>
           <input type="text" id="new-emergency-info" placeholder="Name, Relation, & Phone Number">
         </div>
@@ -127,7 +128,7 @@
     </div>
   </div>
 
-    <div id="edit-user-modal" class="modal hidden">
+  <div id="edit-user-modal" class="modal hidden">
     <div class="modal-content" style="max-width: 500px;">
       <h2 style="margin-bottom: 8px;">Edit User Profile</h2>
       <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Update demographics, emergency info, or trigger a password reset.</p>
@@ -161,7 +162,7 @@
           </select>
         </div>
 
-        <div class="input-group" id="edit-emergency-group" style="margin-bottom: 16px;">
+        <div class="input-group" id="edit-emergency-group" style="margin-bottom: 16px; display: none;">
           <label for="edit-emergency-info">Emergency Contact Info</label>
           <input type="text" id="edit-emergency-info" placeholder="Name, Relation, & Phone Number">
         </div>

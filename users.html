@@ -127,6 +127,58 @@
     </div>
   </div>
 
+    <div id="edit-user-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <h2 style="margin-bottom: 8px;">Edit User Profile</h2>
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Update demographics, emergency info, or trigger a password reset.</p>
+      
+      <form id="edit-user-form">
+        <input type="hidden" id="edit-uid">
+        
+        <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+          <div class="input-group" style="flex: 1;">
+            <label for="edit-first-name">First Name</label>
+            <input type="text" id="edit-first-name" required>
+          </div>
+          <div class="input-group" style="flex: 1;">
+            <label for="edit-last-name">Last Name</label>
+            <input type="text" id="edit-last-name" required>
+          </div>
+        </div>
+
+        <div class="input-group" style="margin-bottom: 16px;">
+          <label for="edit-email">Email Address</label>
+          <input type="email" id="edit-email" disabled style="background: #f1f5f9; cursor: not-allowed; color: #94a3b8;" title="Email addresses cannot be changed here.">
+        </div>
+
+        <div class="input-group" style="margin-bottom: 16px;">
+          <label for="edit-role">System Role</label>
+          <select id="edit-role" required onchange="document.getElementById('edit-emergency-group').style.display = this.value === 'student' ? 'block' : 'none';">
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+            <option value="admin">Administrator</option>
+            <option value="parent">Parent/Stakeholder</option>
+          </select>
+        </div>
+
+        <div class="input-group" id="edit-emergency-group" style="margin-bottom: 16px;">
+          <label for="edit-emergency-info">Emergency Contact Info</label>
+          <input type="text" id="edit-emergency-info" placeholder="Name, Relation, & Phone Number">
+        </div>
+
+        <div style="margin-bottom: 24px; padding: 12px; background: #fffbeb; border-radius: 6px; border: 1px solid #fde68a;">
+            <strong style="display: block; font-size: 13px; color: #b45309; margin-bottom: 6px;">Authentication & Access</strong>
+            <button type="button" id="send-reset-btn" class="btn-secondary" style="width: 100%; border-color: #f59e0b; color: #b45309;">Send Password Reset Email</button>
+        </div>
+        
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <button type="button" id="close-edit-modal-btn" class="btn-secondary">Cancel</button>
+          <button type="submit" id="submit-edit-btn" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script type="module" src="users.js"></script>
 </body>
 </html>

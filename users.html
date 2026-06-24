@@ -104,6 +104,29 @@
     </div>
   </div>
 
+  <div id="link-student-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 400px;">
+      <h2 style="margin-bottom: 8px;">Assign Student to Stakeholder</h2>
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Select the junior developer this stakeholder should have access to.</p>
+      
+      <form id="link-student-form">
+        <input type="hidden" id="link-parent-uid">
+        
+        <div class="input-group">
+          <label for="link-student-select">Select Student</label>
+          <select id="link-student-select" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <option value="" disabled selected>Loading students...</option>
+          </select>
+        </div>
+        
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+          <button type="button" id="close-link-modal-btn" class="btn-secondary">Cancel</button>
+          <button type="submit" id="submit-link-btn" class="btn-primary">Save Linkage</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script type="module" src="users.js"></script>
 </body>
 </html>

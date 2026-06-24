@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, getDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 import { hideGlobalLoader, showToast } from "./utils.js";
 
 import { firebaseConfig } from "./config.js";
@@ -94,21 +94,37 @@ function loadUsers() {
       const uid = docSnap.id;
       const isActive = data.isActive;
 
+      // Build the standard action buttons
+      let actionButtons = `
+        <button class="btn-secondary toggle-status-btn" style="width:auto;" data-uid="${uid}" data-active="${isActive}">Toggle Status</button>
+        <button class="btn-danger delete-btn" data-uid="${uid}">Delete</button>
+      `;
+
+      // If they are a parent, add the Linkage button!
+      let roleDisplay = `<span style="text-transform: capitalize;">${data.role}</span>`;
+      if (data.role === 'parent') {
+        const linkText = data.linkedStudentId ? 'Change Student' : 'Link Student';
+        const linkColor = data.linkedStudentId ? '#0f9d58' : 'var(--primary-color)';
+        
+        actionButtons = `<button class="btn-primary link-student-btn" style="width:auto; margin-right: 8px; background: ${linkColor};" data-uid="${uid}">🔗 ${linkText}</button>` + actionButtons;
+        
+        if (data.linkedStudentId) {
+            roleDisplay += `<br><span style="font-size: 11px; color: #64748b;">Linked to ID: ...${data.linkedStudentId.slice(-4)}</span>`;
+        }
+      }
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><strong>${data.lastName}, ${data.firstName}</strong></td>
         <td>${data.email}</td>
-        <td style="text-transform: capitalize;">${data.role}</td>
+        <td>${roleDisplay}</td>
         <td><span class="status-badge status-${isActive}">${isActive ? 'Active' : 'Suspended'}</span></td>
-        <td>
-          <button class="btn-secondary toggle-status-btn" style="width:auto;" data-uid="${uid}" data-active="${isActive}">Toggle Status</button>
-          <button class="btn-danger delete-btn" data-uid="${uid}">Delete</button>
-        </td>
+        <td>${actionButtons}</td>
       `;
       tbody.appendChild(tr);
     });
 
-    attachTableListeners();
+    attachTableListeners(); // Re-attach listeners after rebuilding
   });
 }
 
@@ -237,3 +253,83 @@ async function loadSchoolBranding() {
     console.error("Error loading branding:", error);
   }
 };
+
+// --- STUDENT LINKAGE SYSTEM ---
+const linkModal = document.getElementById('link-student-modal');
+const linkForm = document.getElementById('link-student-form');
+const linkParentUidInput = document.getElementById('link-parent-uid');
+const linkStudentSelect = document.getElementById('link-student-select');
+const closeLinkModalBtn = document.getElementById('close-link-modal-btn');
+const submitLinkBtn = document.getElementById('submit-link-btn');
+
+let cachedStudents = []; // Cache to prevent excessive reads during mass enrollment
+
+// Function to fetch students for the dropdown
+async function loadStudentsForDropdown() {
+  if (cachedStudents.length === 0) {
+    const q = query(collection(db, `schools/${activeSchoolId}/users`), where("role", "==", "student"));
+    const snaps = await getDocs(q);
+    snaps.forEach(docSnap => {
+      cachedStudents.push({ id: docSnap.id, ...docSnap.data() });
+    });
+  }
+
+  linkStudentSelect.innerHTML = '<option value="" disabled selected>Choose a student...</option>';
+  cachedStudents.forEach(student => {
+    linkStudentSelect.innerHTML += `<option value="${student.id}">${student.lastName}, ${student.firstName}</option>`;
+  });
+}
+
+// Modify your existing attachTableListeners to include the new button
+const originalAttachTableListeners = attachTableListeners;
+window.attachTableListeners = function() {
+  // Call the original toggle/delete listeners
+  if (typeof originalAttachTableListeners === 'function') {
+    originalAttachTableListeners(); 
+  }
+
+  // Attach listener to our new Link buttons
+  document.querySelectorAll('.link-student-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const parentUid = e.target.getAttribute('data-uid');
+      linkParentUidInput.value = parentUid;
+      
+      submitLinkBtn.innerText = "Loading...";
+      linkModal.classList.remove('hidden');
+      
+      await loadStudentsForDropdown();
+      submitLinkBtn.innerText = "Save Linkage";
+    });
+  });
+}
+
+// Handle Form Submission
+linkForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  submitLinkBtn.innerText = "Saving...";
+  submitLinkBtn.disabled = true;
+
+  const parentUid = linkParentUidInput.value;
+  const studentUid = linkStudentSelect.value;
+
+  try {
+    await updateDoc(doc(db, `schools/${activeSchoolId}/users`, parentUid), { 
+      linkedStudentId: studentUid 
+    });
+    
+    // Close & Reset
+    linkModal.classList.add('hidden');
+    linkForm.reset();
+  } catch (error) {
+    console.error("Error linking student:", error);
+    alert("Failed to link student. Check console.");
+  } finally {
+    submitLinkBtn.innerText = "Save Linkage";
+    submitLinkBtn.disabled = false;
+  }
+});
+
+// Close Modal manually
+closeLinkModalBtn.addEventListener('click', () => {
+  linkModal.classList.add('hidden');
+});

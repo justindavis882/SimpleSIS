@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LMS Builder | SimpleSIS</title>
+  <link rel="stylesheet" href="teacher-portal.css">
+  <style>
+    .builder-card { background: white; padding: 24px; border-radius: 12px; border: 1px solid #eaebed; margin-bottom: 24px; }
+    .dynamic-field { display: none; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 16px; }
+    .dynamic-field.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="brand"><h2 style="color: rgb(0, 36, 143);">SimpleSIS</h2></div>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="courses.html">Courses & Pacing</a>
+        <a href="lms-builder.html" class="active">LMS Builder</a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header" style="margin-bottom: 30px;">
+        <div>
+          <h1>LMS Content Builder</h1>
+          <p class="subtitle">Author modules, articles, and assessments for the junior developers.</p>
+        </div>
+      </header>
+
+      <div class="builder-card">
+        <h2>Create New Module Item</h2>
+        <form id="lms-form" style="margin-top: 16px;">
+          
+          <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+            <div style="flex: 2;">
+              <label style="display: block; font-size: 14px; margin-bottom: 6px;">Item Title</label>
+              <input type="text" id="item-title" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+            </div>
+            <div style="flex: 1;">
+              <label style="display: block; font-size: 14px; margin-bottom: 6px;">Content Type</label>
+              <select id="item-type" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                <option value="" disabled selected>Select type...</option>
+                <option value="rich_text">Rich Text Article</option>
+                <option value="single_select">Single Select (Multiple Choice)</option>
+                <option value="multi_select">Multi Select (Checkboxes)</option>
+                <option value="text_response">Short/Long Text Response</option>
+                <option value="link_submission">URL / Link Submission</option>
+              </select>
+            </div>
+            <div style="flex: 1;">
+              <label style="display: block; font-size: 14px; margin-bottom: 6px;">Max Points</label>
+              <input type="number" id="item-points" value="0" min="0" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+            </div>
+          </div>
+
+          <div id="field-rich-text" class="dynamic-field">
+            <label style="display: block; font-size: 14px; margin-bottom: 6px;">Article Content (HTML Supported)</label>
+            <textarea id="content-rich-text" rows="8" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: monospace;"></textarea>
+          </div>
+
+          <div id="field-quiz" class="dynamic-field">
+            <label style="display: block; font-size: 14px; margin-bottom: 6px;">Question Prompt</label>
+            <input type="text" id="content-quiz-prompt" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 12px;">
+            
+            <label style="display: block; font-size: 14px; margin-bottom: 6px;">Answer Options (Comma separated)</label>
+            <input type="text" id="content-quiz-options" placeholder="e.g., HTML, CSS, JavaScript" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 12px;">
+
+            <label style="display: block; font-size: 14px; margin-bottom: 6px;">Correct Answer(s) (Exact match)</label>
+            <input type="text" id="content-quiz-correct" placeholder="e.g., JavaScript" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+          </div>
+
+          <div id="field-prompt-only" class="dynamic-field">
+            <label style="display: block; font-size: 14px; margin-bottom: 6px;">Instructions / Prompt</label>
+            <textarea id="content-prompt" rows="4" placeholder="Describe what the student needs to submit..." style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;"></textarea>
+          </div>
+
+          <button type="submit" id="save-item-btn" class="btn-primary" style="margin-top: 24px;">Save LMS Item</button>
+        </form>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="lms-builder.js"></script>
+</body>
+</html>

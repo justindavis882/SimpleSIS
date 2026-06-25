@@ -63,27 +63,39 @@ function buildNavigation(role) {
 
   if (role === 'admin') {
     dynamicSidebar.innerHTML = `
-      <a href="dashboard.html">Dashboard</a>
-      <a href="users.html">Users & Roles</a>
-      <a href="courses.html">Courses & Pacing</a>
-      <a href="enrollment.html">Enrollment</a>
-      <a href="attendance.html">Live Attendance</a>
-      <a href="reports.html">Reports</a>
-      <a href="settings.html">Settings</a>
-      <a href="profile.html" class="active">My Profile</a>
+        <a href="dashboard.html" class="active">Dashboard</a>
+        <a href="compliance.html">Compliance</a>
+        <a href="users.html">Users & Roles</a>
+        <a href="courses.html">Courses & Pacing</a>
+        <a href="enrollment.html">Enrollment</a>
+        <a href="lms-builder.html">LMS Builder</a>
+        <a href="attendance.html">Live Attendance</a>
+        <a href="reports.html">Reports</a>
+        <a href="settings.html">Settings</a>
+        <a href="profile.html">My Profile</a>
     `;
   } else if (role === 'teacher') {
     dynamicSidebar.innerHTML = `
-      <a href="teacher-portal.html">My Dashboard</a>
-      <a href="teacher-portal.html">Take Attendance</a>
-      <a href="teacher-portal.html">Gradebook</a>
-      <a href="reports.html">Reports</a>
-      <a href="profile.html" class="active">My Profile</a>
+        <a href="dashboard.html" class="active">Dashboard</a>
+        <a href="compliance.html">Compliance</a>
+        <a href="users.html">Users & Roles</a>
+        <a href="courses.html">Courses & Pacing</a>
+        <a href="enrollment.html">Enrollment</a>
+        <a href="lms-builder.html">LMS Builder</a>
+        <a href="attendance.html">Live Attendance</a>
+        <a href="reports.html">Reports</a>
+        <a href="settings.html">Settings</a>
+        <a href="profile.html">My Profile</a>
     `;
 
   } else if (role === 'student') {
     dynamicSidebar.innerHTML = `
       <a href="student-portal.html">My Dashboard</a>
+      <a href="profile.html" class="active">My Profile</a>
+    `;
+  } else if (role === 'parent') {
+    dynamicSidebar.innerHTML = `
+      <a href="parent-portal.html">My Dashboard</a>
       <a href="profile.html" class="active">My Profile</a>
     `;
   }
